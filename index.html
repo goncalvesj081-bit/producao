@@ -355,7 +355,11 @@ th[data-col]:hover{}
 </div>
 <div class="faixa" id="faixa"></div>
 <div class="wrap"><div class="main2" id="main2">
-  <div id="conteudo"></div>
+  <div>
+    <div id="barraTopo"></div>
+    <div class="linha" id="barraChips"></div>
+    <div id="conteudo"></div>
+  </div>
   <aside class="lateral" id="lateral" hidden><h3>Alterações ativas</h3><div class="feed" id="feed"></div></aside>
 </div></div>
 </div>
@@ -404,7 +408,6 @@ let edicao = false, painel = false, verMortas = false, DATA = null;
 let ordem = [], recusas = [], lotes = [];
 let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
-let buscaFoco = false, buscaCaret = 0, buscaValor = '';
 const LIM_CORTE = 20;
 
 // Etapas internas por setor. Setor sem entrada aqui = só registra a saída,
@@ -581,7 +584,7 @@ async function iniciar(){
     await sb.auth.signOut(); return;
   }
   perfil = p;
-  edicao = false; sel.clear(); filtro = null; busca = ''; buscaValor = ''; buscaFoco = false; ordem = []; DATA = hoje();
+  edicao = false; sel.clear(); filtro = null; busca = ''; barraSig = ''; ordem = []; DATA = hoje();
   Object.keys(F).forEach(k => F[k] = '');
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
@@ -590,7 +593,7 @@ async function iniciar(){
   tela = p.papel === 'setor' ? 'setor' : 'pcp';
   document.getElementById('abas').hidden = p.papel !== 'pcp';
   document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
-    tela = a.dataset.t; sel.clear(); edicao = false; fecharM(); pintar();
+    tela = a.dataset.t; sel.clear(); edicao = false; barraSig = ''; fecharM(); pintar();
   });
   await carregar();
   ligarTempoReal();
@@ -846,46 +849,57 @@ function pintar(){
   feed();
 }
 
-function barraFiltro(chips, selects){
-  const ativos = busca || Object.values(F).some(Boolean) || ordem.length;
-  return `<div class="linha">
-    <span class="cont" id="cont"></span>
-    <div class="busca"><input id="q" placeholder="Buscar pedido, item, composição, cliente…" value="${esc(busca)}"></div>
-    ${(selects || []).map(s => `<select class="fsel ${F[s.k] ? 'on' : ''}" data-fk="${s.k}">
+let barraSig = '';
+function montarBarra(selects){
+  const el = document.getElementById('barraTopo');
+  const q0 = document.getElementById('q');
+  const digitando = q0 && document.activeElement === q0;
+  const sig = tela + '|' + selects.map(s =>
+    s.k + ':' + [...new Set(dados.map(s.get))].filter(Boolean).sort().join('~')).join('|');
+  if(q0 && (sig === barraSig || digitando)) return atualizarBarra(selects);
+  barraSig = sig;
+  el.innerHTML = `<div class="linha">
+    <div class="busca"><input id="q" type="search" placeholder="Buscar pedido, item, composição, cliente…" value="${esc(busca)}"></div>
+    ${selects.map(s => `<select class="fsel" data-fk="${s.k}">
       <option value="">${s.lbl}</option>
       ${[...new Set(dados.map(s.get))].filter(Boolean).sort()
-        .map(v => `<option value="${esc(v)}"${F[s.k] === v ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+        .map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
     </select>`).join('')}
-    ${ativos ? '<button class="flimpar" id="fLimpar">Limpar</button>' : ''}
-  </div>
-  <div class="linha">${chips}</div>`;
+    <button class="flimpar" id="fLimpar" hidden>Limpar</button>
+  </div>`;
+  const q = document.getElementById('q');
+  q.oninput = e => {
+    const v = e.target.value;
+    clearTimeout(q._t);
+    q._t = setTimeout(() => { busca = v.trim(); pintar(); }, 260);
+  };
+  el.querySelectorAll('[data-fk]').forEach(s => s.onchange = () => { F[s.dataset.fk] = s.value; pintar(); });
+  document.getElementById('fLimpar').onclick = () => {
+    busca = ''; Object.keys(F).forEach(k => F[k] = ''); ordem = [];
+    document.getElementById('q').value = '';
+    pintar();
+  };
+  atualizarBarra(selects);
 }
-function ligarFiltro(){
-  document.querySelectorAll('[data-fk]').forEach(s => s.onchange = () => {
-    F[s.dataset.fk] = s.value; pintar();
+function atualizarBarra(selects){
+  selects.forEach(s => {
+    const el = document.querySelector(`[data-fk="${s.k}"]`);
+    if(!el) return;
+    if(el.value !== (F[s.k] || '')) el.value = F[s.k] || '';
+    el.classList.toggle('on', !!F[s.k]);
   });
   const fl = document.getElementById('fLimpar');
-  if(fl) fl.onclick = () => { busca = ''; buscaValor = ''; buscaCaret = 0; Object.keys(F).forEach(k => F[k] = ''); ordem = []; pintar(); };
+  if(fl) fl.hidden = !(busca || Object.values(F).some(Boolean) || ordem.length);
+}
+
+function barraFiltro(chips, selects){
+  montarBarra(selects || []);
+  document.getElementById('barraChips').innerHTML =
+    `<span class="cont" id="cont"></span>` + chips;
+  return '';
+}
+function ligarFiltro(){
   document.querySelectorAll('th[data-col]').forEach(t => t.onclick = () => clicarCol(t.dataset.col));
-  const q = document.getElementById('q');
-  if(q){
-    // o campo é recriado a cada repintura: devolve exatamente o que a pessoa digitou,
-    // com o cursor onde estava, senão as letras se embaralham
-    if(buscaFoco){
-      q.value = buscaValor;
-      q.focus();
-      try { q.setSelectionRange(buscaCaret, buscaCaret); } catch(_){}
-    }
-    q.oninput = e => {
-      buscaValor = e.target.value;
-      buscaCaret = e.target.selectionStart;
-      buscaFoco = true;
-      clearTimeout(q._t);
-      q._t = setTimeout(() => { busca = buscaValor.trim(); pintar(); }, 260);
-    };
-    q.onblur = () => { buscaFoco = false; };
-    q.onfocus = () => { buscaFoco = true; buscaValor = q.value; };
-  }
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
     filtro = filtro === b.dataset.f ? null : b.dataset.f; pintar();
   });
