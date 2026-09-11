@@ -87,6 +87,16 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 .faixa{padding:8px 18px;font-size:12.5px;font-weight:600;background:var(--gray-bg);
   border-bottom:1px solid var(--border2);opacity:.75}
 .faixa.on{background:rgba(77,159,255,.12);border-bottom-color:rgba(77,159,255,.35);opacity:1}
+.vivo{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;font-size:11.5px;font-weight:700;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);white-space:nowrap}
+.vivo[hidden]{display:none}
+.vivo .vd{width:8px;height:8px;border-radius:50%;background:var(--green);
+  animation:bpm 2s ease-in-out infinite;flex:none}
+@keyframes bpm{0%,100%{opacity:1}50%{opacity:.25}}
+.vivo.off{border-color:var(--red)} .vivo.off .vd{background:var(--red);animation:none}
+.vivo.pend{border-color:var(--amber);border-width:2px;cursor:pointer}
+.vivo.pend .vd{background:var(--amber)}
+@media(prefers-reduced-motion:reduce){.vivo .vd{animation:none}}
 .mini.editando{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.2)}
 .wrap{padding:14px 18px 90px}
 .linha{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
@@ -316,6 +326,7 @@ th[data-col]:hover{opacity:1}
     </div>
     <button class="mini" id="btPainel" hidden>Alterações</button>
     <button class="mini" id="btEditar" hidden></button>
+    <span class="vivo" id="vivo" hidden><span class="vd"></span><span id="vivoTxt">ao vivo</span></span>
     <button class="mini" id="btRecarregar" title="Recarregar do banco">↻</button>
     <button class="mini" id="btTema">◐</button>
     <button class="mini" id="btSair">Sair</button>
@@ -373,6 +384,7 @@ let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
 let edicao = false, painel = false, verMortas = false, DATA = null;
 let ordem = [], recusas = [], lotes = [];
+let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
 const LIM_CORTE = 20;
 
@@ -521,6 +533,7 @@ async function entrar(){
   iniciar();
 }
 document.getElementById('btSair').onclick = async () => {
+  if(canal) sb.removeChannel(canal);
   await sb.auth.signOut(); location.reload();
 };
 
@@ -547,11 +560,18 @@ async function iniciar(){
     tela = a.dataset.t; sel.clear(); edicao = false; fecharM(); pintar();
   });
   await carregar();
+  ligarTempoReal();
 }
 
 /* ---------------- CARGA DE DADOS ---------------- */
-async function carregar(){
-  document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
+async function carregar(silencioso){
+  if(recarregando) return;
+  recarregando = true;
+  const cx = document.querySelector('.ts');
+  const rolX = cx ? cx.scrollLeft : 0, rolY = cx ? cx.scrollTop : 0;
+  const foco = document.activeElement && document.activeElement.id;
+  const cursor = foco === 'q' ? document.activeElement.selectionStart : null;
+  if(!silencioso) document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
   const [itens, rot, bx, fec, alt, etp, rec] = await Promise.all([
     sb.from('itens').select('*').order('pedido'),
     sb.from('roteiro').select('*'),
@@ -561,7 +581,7 @@ async function carregar(){
     sb.from('etapas').select('*'),
     sb.from('recusas').select('*')
   ]);
-  for(const r of [itens, rot, bx, fec, alt, etp, rec]) if(r.error) return erro(r.error);
+  for(const r of [itens, rot, bx, fec, alt, etp, rec]) if(r.error){ recarregando = false; return erro(r.error); }
   alteracoes = alt.data || [];
   recusas = rec.data || [];
   const porItem = {};
@@ -576,6 +596,13 @@ async function carregar(){
     });
   });
   pintar();
+  const cx2 = document.querySelector('.ts');
+  if(cx2){ cx2.scrollLeft = rolX; cx2.scrollTop = rolY; }
+  if(foco === 'q'){
+    const q = document.getElementById('q');
+    if(q){ q.focus(); if(cursor !== null) try { q.setSelectionRange(cursor, cursor); } catch(_){} }
+  }
+  recarregando = false;
 }
 document.getElementById('btEditar').onclick = () => {
   if(!podeEscrever()) return;
@@ -994,6 +1021,7 @@ async function rapidoEtapa(id, k){
   if(error) return erro(error);
   toast(`${nomeEtapa(k)} · ${fmt(DATA)} · ${it.item}`);
   await carregar();
+  ligarTempoReal();
 }
 async function rapidoBaixa(id){
   const s = setorDaTela(), it = dados.find(x => x.id === id);
@@ -1004,6 +1032,7 @@ async function rapidoBaixa(id){
   if(error) return erro(error);
   toast(`${falta} un · ${fmt(DATA)} · ${it.item}`);
   await carregar();
+  ligarTempoReal();
 }
 
 /* ---------------- MODAIS ---------------- */
@@ -1071,6 +1100,7 @@ async function salvarNovo(){
   fecharM();
   toast(`${data.pedido} criado · chave ${data.chave_import.slice(0, 28)}… seq ${data.seq}`);
   await carregar();
+  ligarTempoReal();
 }
 
 /* ---------- carga ---------- */
@@ -1209,6 +1239,7 @@ async function decidirRecusa(r, acao){
     : acao === 'regra' ? `Regra corrigida: ${it.item} não passa mais pelo ${SETN[r.setor_id].toLowerCase()}`
     : 'Recusa aceita nesta linha');
   await carregar();
+  ligarTempoReal();
 }
 
 /* ---------- lote do corte + impressão ---------- */
@@ -1226,6 +1257,7 @@ document.getElementById('baCorte').onclick = async () => {
   sel.clear();
   toast(`Lote ${fmt(hoje())} · ${its.length} itens liberados para o corte`);
   await carregar();
+  ligarTempoReal();
 };
 
 document.getElementById('baImprimir').onclick = () => {
@@ -1614,6 +1646,48 @@ function modalBaixa(id){
     const { error } = await sb.from('baixas').delete().eq('id', b.dataset.del);
     if(error) return erro(error);
     fecharM(); toast('Baixa removida'); await carregar();
+  });
+}
+
+/* ---------------- TEMPO REAL ---------------- */
+
+function marcarVivo(estado, txt){
+  const el = document.getElementById('vivo');
+  el.hidden = !perfil;
+  el.classList.toggle('off', estado === 'off');
+  el.classList.toggle('pend', estado === 'pend');
+  document.getElementById('vivoTxt').textContent = txt;
+  el.onclick = estado === 'pend' ? aplicarPendentes : null;
+}
+function modalAberto(){ return document.getElementById('mb').classList.contains('open'); }
+
+async function aplicarPendentes(){
+  pend = 0;
+  await carregar(true);
+  marcarVivo('on', 'ao vivo');
+}
+function mudou(){
+  pend++;
+  // não puxa o tapete: se tem modal aberto ou seleção em curso, avisa e espera
+  if(modalAberto() || sel.size){
+    marcarVivo('pend', `${pend} atualizaç${pend > 1 ? 'ões' : 'ão'} · ver`);
+    return;
+  }
+  clearTimeout(tRec);
+  tRec = setTimeout(() => { pend = 0; carregar(true); }, 700);
+}
+
+function ligarTempoReal(){
+  if(canal) sb.removeChannel(canal);
+  canal = sb.channel('producao');
+  ['itens','roteiro','baixas','fechamentos','etapas','alteracoes','recusas','lotes']
+    .forEach(t => canal.on('postgres_changes', {event:'*', schema:'public', table:t}, mudou));
+  canal.subscribe(st => {
+    if(st === 'SUBSCRIBED') marcarVivo('on', 'ao vivo');
+    else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){
+      marcarVivo('off', 'sem conexão');
+      setTimeout(ligarTempoReal, 4000);
+    }
   });
 }
 
