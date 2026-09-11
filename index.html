@@ -29,7 +29,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body,body *{color:var(--text)!important}
-::placeholder{color:var(--text)!important;opacity:.45}
+::placeholder{color:var(--text)!important;}
 option{background:var(--bg2)}
 html{font-size:17px}
 body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh}
@@ -44,10 +44,10 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 .card h1{font-size:17px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;
   display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--acc)}
-.card p.sub{font-size:13px;opacity:.6;margin-bottom:22px;font-weight:600}
+.card p.sub{font-size:13px;margin-bottom:22px;font-weight:600}
 .campo{margin-bottom:12px}
 .campo label{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
-  font-weight:800;opacity:.65;margin-bottom:6px}
+  font-weight:800;margin-bottom:6px}
 .campo input{width:100%;padding:12px 13px;background:var(--bg3);border:1px solid var(--border2);
   border-radius:var(--rad);font-size:15px}
 .campo input:focus{border-color:var(--acc);outline:none}
@@ -59,11 +59,11 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 .btn.verde{background:var(--green-bg);border:2px solid var(--green)}
 .btn.verde:hover{background:rgba(39,201,126,.28)}
 .btn.roxa{background:var(--roxo-bg);border:2px solid var(--roxo)}
-.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:disabled{cursor:not-allowed;border-style:dashed;background:var(--bg3)}
 .btn.w{width:100%;margin-top:8px}
 .erro{background:var(--red-bg);border:1px solid var(--red);border-radius:var(--rad);
   padding:10px 12px;font-size:13px;font-weight:700;margin-top:12px}
-.cfg{margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);font-size:12px;opacity:.6;
+.cfg{margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);font-size:12px;
   font-weight:600;line-height:1.5}
 
 /* ---------- app ---------- */
@@ -71,28 +71,28 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
   justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 18px;position:sticky;top:0;z-index:50}
 .logo{font-weight:800;font-size:14px;letter-spacing:.11em;text-transform:uppercase;
   display:flex;align-items:center;gap:9px}
-.logo em{font-style:normal;opacity:.55}
+.logo em{font-style:normal;}
 .hr{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .quem{font-size:12.5px;font-weight:700;background:var(--bg3);border:1px solid var(--border2);
   padding:7px 12px;border-radius:var(--rad)}
-.quem b{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.65;display:block}
+.quem b{font-family:'JetBrains Mono',monospace;font-size:11px;display:block}
 .abas{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);padding:3px}
-.aba{padding:7px 13px;border:0;background:none;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;opacity:.6}
-.aba.on{background:var(--bg5);opacity:1}
+.aba{padding:7px 13px;border:0;background:none;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;}
+.aba.on{background:var(--bg5);}
 .mini{padding:8px 11px;font-size:13px;font-weight:700;background:var(--bg3);
   border:1px solid var(--border2);border-radius:var(--rad);cursor:pointer}
 .mini:hover{border-color:var(--acc)}
 .mini.on{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.14)}
 
 .faixa{padding:8px 18px;font-size:12.5px;font-weight:600;background:var(--gray-bg);
-  border-bottom:1px solid var(--border2);opacity:.75}
-.faixa.on{background:rgba(77,159,255,.12);border-bottom-color:rgba(77,159,255,.35);opacity:1}
+  border-bottom:1px solid var(--border2);}
+.faixa.on{background:rgba(77,159,255,.12);border-bottom-color:rgba(77,159,255,.35);}
 .vivo{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;font-size:11.5px;font-weight:700;
   background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);white-space:nowrap}
 .vivo[hidden]{display:none}
 .vivo .vd{width:8px;height:8px;border-radius:50%;background:var(--green);
   animation:bpm 2s ease-in-out infinite;flex:none}
-@keyframes bpm{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes bpm{0%,100%{transform:scale(1)}50%{transform:scale(.55)}}}
 .vivo.off{border-color:var(--red)} .vivo.off .vd{background:var(--red);animation:none}
 .vivo.pend{border-color:var(--amber);border-width:2px;cursor:pointer}
 .vivo.pend .vd{background:var(--amber)}
@@ -100,8 +100,8 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 .mini.editando{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.2)}
 .wrap{padding:14px 18px 90px}
 .linha{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
-.cont{font-size:13.5px;font-weight:700;opacity:.75}
-.cont b{font-family:'JetBrains Mono',monospace;opacity:1}
+.cont{font-size:13.5px;font-weight:700;}
+.cont b{font-family:'JetBrains Mono',monospace;}
 .busca{position:relative;flex:1 1 240px}
 .busca input{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border2);
   border-radius:var(--rad);font-size:14px}
@@ -121,7 +121,7 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 table{border-collapse:collapse;min-width:100%}
 thead tr{position:sticky;top:0;background:var(--bg3);z-index:2}
 th{padding:9px 6px;text-align:left;font-size:10.5px;font-weight:800;text-transform:uppercase;
-  letter-spacing:.07em;border-bottom:2px solid var(--border3);white-space:nowrap;opacity:.8}
+  letter-spacing:.07em;border-bottom:2px solid var(--border3);white-space:nowrap;}
 th.c{text-align:center;background:var(--gray-bg);padding:9px 3px;font-size:9.5px}
 th.crg{background:var(--green-bg)}
 tbody tr{border-bottom:1px solid var(--border2)}
@@ -139,9 +139,9 @@ tbody tr:nth-child(even) td.crg{background:rgba(39,201,126,.17)}
 .mono{font-family:'JetBrains Mono',monospace}
 .ped{font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
 .it{font-weight:700;line-height:1.3;max-width:230px;word-break:break-word}
-.cp{font-size:11px;opacity:.55;font-family:'JetBrains Mono',monospace;line-height:1.4;max-width:220px;
+.cp{font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;line-height:1.4;max-width:220px;
   word-break:break-word}
-.obs{font-size:11.5px;opacity:.7;max-width:140px}
+.obs{font-size:11.5px;font-weight:500;max-width:140px}
 .pill{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   width:42px;min-height:34px;border-radius:6px;border:2px solid transparent;padding:3px 2px;
   font-family:inherit;background:none}
@@ -168,7 +168,7 @@ button.pill:hover{filter:brightness(1.3)}
 .t-repro,.t-espec{background:var(--roxo-bg);border-color:var(--roxo)}
 .t-vinc{background:rgba(77,159,255,.13);border-color:var(--acc)}
 .t-insumo{background:var(--green-bg);border-color:var(--green)}
-.vazio{padding:48px 20px;text-align:center;font-size:14px;font-weight:600;opacity:.55;line-height:1.6}
+.vazio{padding:48px 20px;text-align:center;font-size:14px;font-weight:500;line-height:1.6}
 
 .ba{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--bg5);
   border:1px solid var(--border3);border-radius:12px;padding:11px 14px;display:flex;align-items:center;
@@ -182,15 +182,15 @@ button.pill:hover{filter:brightness(1.3)}
   max-height:88vh;overflow-y:auto;box-shadow:var(--shadow)}
 .mh{padding:18px 22px 14px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;
   align-items:flex-start;gap:12px}
-.mh .et{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.7;margin-bottom:4px}
+.mh .et{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;margin-bottom:4px}
 .mh h3{font-size:18px;font-weight:800;line-height:1.25}
-.mh .sb{font-size:12px;opacity:.6;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.mh .sb{font-size:12px;font-weight:500;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
 .mx{background:var(--bg3);border:1px solid var(--border2);width:31px;height:31px;border-radius:9px;
   font-size:16px;cursor:pointer;flex-shrink:0}
 .mbody{padding:6px 22px 22px}
 .bl{padding:15px 0 0}
 .bl+.bl{border-top:1px solid var(--border2);margin-top:13px}
-.bl h5{font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;opacity:.6;margin-bottom:9px}
+.bl h5{font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;margin-bottom:9px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g2 .full{grid-column:1/-1}
 .g2 input,.g2 select,.g2 textarea{padding:10px 12px;background:var(--bg3);border:1px solid var(--border2);
@@ -200,7 +200,7 @@ button.pill:hover{filter:brightness(1.3)}
   border-radius:var(--rad);padding:3px;width:max-content}
 .step button{width:38px;height:36px;border:0;background:none;font-size:20px;font-weight:700;cursor:pointer;border-radius:6px}
 .step button:hover:not(:disabled){background:var(--bg4)}
-.step button:disabled{opacity:.25;cursor:not-allowed}
+.step button:disabled{cursor:not-allowed;border:1px dashed var(--border2)}
 .step .v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;min-width:42px;text-align:center}
 .chips2{display:flex;gap:6px;flex-wrap:wrap}
 .c2{padding:7px 12px;border-radius:18px;font-size:12.5px;font-weight:700;background:var(--bg3);
@@ -211,24 +211,24 @@ button.pill:hover{filter:brightness(1.3)}
 .hq{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;background:var(--green-bg);
   border:1px solid var(--green);padding:2px 8px;border-radius:5px;white-space:nowrap}
 .hx{margin-left:auto;background:none;border:0;font-size:11px;font-weight:700;cursor:pointer;
-  opacity:.6;padding:4px 7px;border-radius:5px}
-.hx:hover{background:var(--red-bg);opacity:1}
-.dica{display:block;font-size:11.5px;opacity:.55;font-weight:600;margin-top:8px;line-height:1.5}
+padding:4px 7px;border-radius:5px}
+.hx:hover{background:var(--red-bg);}
+.dica{display:block;font-size:11.5px;font-weight:500;font-weight:600;margin-top:8px;line-height:1.5}
 .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .acoes .btn{flex:1 1 120px}
 #toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(8px);background:var(--bg5);
   border:1px solid var(--border3);padding:12px 17px;border-radius:11px;font-size:13.5px;font-weight:700;
-  z-index:90;opacity:0;pointer-events:none;transition:.18s;box-shadow:var(--shadow);max-width:calc(100% - 30px)}
-#toast.on{opacity:1;transform:translateX(-50%)}
+  z-index:90;visibility:hidden;pointer-events:none;transition:transform .18s, visibility .18s;box-shadow:var(--shadow);max-width:calc(100% - 30px)}
+#toast.on{visibility:visible;transform:translateX(-50%);pointer-events:auto}
 #toast.err{border-color:var(--red);background:var(--red-bg)}
 
 /* ---- acrescentado na versão completa ---- */
 .dataseg{display:flex;align-items:center;gap:2px;background:var(--bg3);border:1px solid var(--border2);
   border-radius:var(--rad);padding:3px}
 .dataseg button{padding:6px 11px;font-size:12.5px;font-weight:700;background:none;border:0;
-  border-radius:6px;cursor:pointer;opacity:.6}
-.dataseg button.on{background:var(--bg5);opacity:1}
-.dataseg button i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.65;margin-left:4px}
+  border-radius:6px;cursor:pointer;}
+.dataseg button.on{background:var(--bg5);}
+.dataseg button i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:4px}
 .dataseg.alt{border-color:var(--amber);border-width:2px;background:var(--amber-bg)}
 .dataseg #dtOutra{padding:5px 8px;font-size:12px;font-weight:700;background:var(--bg5);
   border:1px solid var(--border2);border-radius:6px;font-family:'JetBrains Mono',monospace;max-width:140px}
@@ -245,8 +245,8 @@ button.pill:hover{filter:brightness(1.3)}
   border-radius:var(--rad);cursor:pointer}
 .flimpar[hidden]{display:none}
 th[data-col]{cursor:pointer;user-select:none}
-th[data-col]:hover{opacity:1}
-.ordm{font-size:9px;margin-left:4px;opacity:.9}
+th[data-col]:hover{}
+.ordm{font-size:9px;margin-left:4px;}
 .p-rec{background:var(--red-bg);border-color:var(--red);cursor:pointer;
   animation:bater 2.4s ease-in-out infinite}
 @keyframes bater{0%,100%{box-shadow:0 0 0 0 rgba(240,85,85,0)}50%{box-shadow:0 0 0 3px rgba(240,85,85,.22)}}
@@ -264,18 +264,18 @@ th[data-col]:hover{opacity:1}
 @media(max-width:1150px){.main2.compainel{grid-template-columns:1fr}}
 .lateral{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);padding:15px;
   position:sticky;top:70px}
-.lateral h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;opacity:.6;margin-bottom:11px}
+.lateral h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;margin-bottom:11px}
 .feed{display:flex;flex-direction:column;gap:9px;max-height:calc(100vh - 210px);overflow-y:auto}
 .fd{border:1px solid var(--border2);border-radius:var(--rad);padding:10px 11px;background:var(--bg3)}
 .fd-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap}
 .fd-ped{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700}
 .fd-txt{font-size:12.5px;font-weight:600;line-height:1.4}
-.fd-meta{font-size:10px;opacity:.55;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.fd-meta{font-size:10px;font-weight:500;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
 .fd-ed{margin-left:auto;background:none;border:0;font-size:11px;font-weight:700;cursor:pointer;
   text-decoration:underline;padding:3px 5px}
 .pv{flex:1 1 110px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);padding:10px 11px}
 .pv.forte{border-color:var(--green);border-width:2px;background:var(--green-bg)}
-.pv .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;opacity:.65}
+.pv .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;}
 .pv .v{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;margin-top:3px}
 .motivo{background:var(--bg3);border:1px solid var(--border2);border-left:4px solid var(--red);
   border-radius:var(--rad);padding:10px 12px;font-size:13px;font-weight:600;line-height:1.45}
@@ -346,7 +346,7 @@ th[data-col]:hover{opacity:1}
 
 <div class="ba" id="ba" hidden>
   <span><b id="baN"></b> <span id="baLbl">pedidos</span></span>
-  <span style="opacity:.6;font-weight:600;font-size:12.5px" id="baRes"></span>
+  <span style="font-weight:600;font-size:12.5px" id="baRes"></span>
   <button class="btn" id="baLimpar" style="padding:7px 10px">limpar</button>
   <button class="btn" id="baImprimir" style="padding:9px 14px" hidden>Ordenar e imprimir</button>
   <button class="btn pri" id="baCorte" style="padding:9px 14px" hidden>Dar início ao corte</button>
@@ -658,11 +658,11 @@ function pronto(it){
   return t ? Math.round(f / t * 100) : 100;
 }
 function corpoAlt(as){
-  if(!as.length) return '<span style="opacity:.4">—</span>';
+  if(!as.length) return '<span style="">—</span>';
   return as.map(a => `<div style="margin-bottom:4px">
     <span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
     <div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>
-    <div style="font-size:10px;opacity:.55;font-family:'JetBrains Mono',monospace;margin-top:2px">
+    <div style="font-size:10pxfont-family:'JetBrains Mono',monospace;margin-top:2px">
       ${a.itens ? 'só este item · ' : ''}${fmt(a.data)} · ${esc(a.por)}${a.setores && a.setores.length < 10 ? ' · ' + a.setores.length + ' setores' : ''}</div>
   </div>`).join('');
 }
@@ -895,9 +895,9 @@ function telaPCP(){
             <span class="bar"><i style="width:${p}%;background:${cor}"></i></span></div></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
           <td class="ped">${esc(it.pedido)}</td>
-          <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
+          <td style="font-size:11.5px">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px;${d !== null && d < 0 ? 'font-weight:700' : ''}">${fmt(it.data_carga)}</td>
-          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">a definir</span>'}</td>
+          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="">a definir</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
           <td>${podeEditar
             ? `<button class="celbt" data-alt="${it.pedido}" data-item="${it.id}">${corpoAlt(as)}</button>`
@@ -905,7 +905,7 @@ function telaPCP(){
           <td><div class="it">${esc(it.item)}</div></td>
           <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
           <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
-          <td style="font-size:11.5px;opacity:.7">${esc(it.cliente) || '—'}</td>
+          <td style="font-size:11.5px">${esc(it.cliente) || '—'}</td>
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
@@ -1028,9 +1028,9 @@ function telaSetor(){
           <td class="c"><span class="pill ${nomes.length ? (e === 'ok' ? 'p-ok' : 'p-pa') : ''}">${parc}</span></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
           <td class="ped">${esc(it.pedido)}</td>
-          <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
+          <td style="font-size:11.5px">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px">${fmt(it.data_carga)}${d !== null && d < 0 ? ' ⚠' : ''}</td>
-          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">—</span>'}</td>
+          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="">—</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
           <td>${corpoAlt(as)}</td>
           <td><div class="it">${esc(it.item)}</div></td>
@@ -1289,13 +1289,13 @@ function modalDetalhe(id, s){
       ${ets.map(x => `<div class="hrow">
         <span class="hq">${esc(nomeEtapa(x.etapa))}</span>
         <span class="mono" style="font-size:12.5px">${fmt(x.data)}</span>
-        <span style="font-size:11.5px;opacity:.6">${esc(x.por) || ''}${x.lote_id ? ' · lote' : ''}</span>
+        <span style="font-size:11.5px">${esc(x.por) || ''}${x.lote_id ? ' · lote' : ''}</span>
       </div>`).join('')}</section>` : ''}
     <section class="bl"><h5>Entregas registradas</h5>
       ${bxs.length ? bxs.map(b => `<div class="hrow">
         <span class="hq">${b.qtd} ${esc(b.peca) || 'un'}</span>
         <span class="mono" style="font-size:12.5px">${fmt(b.data)}</span>
-        <span style="font-size:11.5px;opacity:.6">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
+        <span style="font-size:11.5px">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
       </div>`).join('') : '<span class="dica" style="margin:0">Nenhuma ainda.</span>'}
     </section>
     <section class="bl">
@@ -1428,9 +1428,9 @@ function modalPrevia(){
     <section class="bl"><h5>Amostra</h5>
       <div style="max-height:170px;overflow:auto;border:1px solid var(--border2);border-radius:var(--rad)">
         ${novos.slice(0, 12).map(i => `<div style="padding:7px 10px;border-top:1px solid var(--border);font-size:12px">
-          <b>${esc(i.item)}</b> <span class="mono" style="opacity:.6">${esc(i.pedido)}${i._seq > 1 ? ' · seq ' + i._seq : ''}</span>
+          <b>${esc(i.item)}</b> <span class="mono" style="">${esc(i.pedido)}${i._seq > 1 ? ' · seq ' + i._seq : ''}</span>
           <div class="cp">${esc(i.composicao)}</div>
-          <div style="opacity:.6;font-size:11px">passa em: ${SETN.filter((_, s) => !i._naoPassa.includes(s)).join(', ') || '(nenhum)'}</div>
+          <div style="font-size:11px">passa em: ${SETN.filter((_, s) => !i._naoPassa.includes(s)).join(', ') || '(nenhum)'}</div>
         </div>`).join('')}
       </div>
     </section>
@@ -1502,7 +1502,7 @@ function modalRecusa(id){
   abrirM('Recusa de roteiro', it.item, `${it.pedido} · ${SETN[r.setor_id]} · ${it.composicao || 'sem composição'}`, `
     <section class="bl"><h5>O que o setor disse</h5>
       <div class="motivo">“${esc(r.motivo || 'não passa por aqui')}”
-        <span style="display:block;font-size:11px;opacity:.6;margin-top:5px;font-family:'JetBrains Mono',monospace">${esc(r.por)} · ${fmt(r.data)}</span></div>
+        <span style="display:block;font-size:11pxmargin-top:5px;font-family:'JetBrains Mono',monospace">${esc(r.por)} · ${fmt(r.data)}</span></div>
     </section>
     <section class="bl"><h5>O que o histórico diz</h5>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1591,7 +1591,7 @@ document.getElementById('baImprimir').onclick = () => {
       const i = dados.find(x => x.id === id);
       return `<li data-id="${id}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;
         border-top:1px solid var(--border)">
-        <span class="mono" style="width:22px;text-align:right;font-size:11.5px;opacity:.6">${n + 1}</span>
+        <span class="mono" style="width:22px;text-align:right;font-size:11.5px">${n + 1}</span>
         <span style="flex:1;min-width:0"><span style="font-size:13px;font-weight:700">${esc(i.item)}</span>
           <span class="cp" style="display:block">${esc(i.pedido)} · ${esc(i.composicao) || ''}</span></span>
         <span class="mono" style="font-size:12px">${fmt(i.data_carga)}</span>
@@ -1666,7 +1666,7 @@ tr{page-break-inside:avoid} thead{display:table-header-group}
   const velho = document.getElementById('ifp'); if(velho) velho.remove();
   const f = document.createElement('iframe');
   f.id = 'ifp';
-  f.setAttribute('style', 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0');
+  f.setAttribute('style', 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden');
   document.body.appendChild(f);
   f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); }
     catch(e){ window.open(URL.createObjectURL(new Blob([doc], {type:'text/html'})), '_blank'); } };
@@ -1699,7 +1699,7 @@ function modalAlt(itemClicado, editar){
       ${jaTem.map(a => `<div class="hrow">
         <span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
         <span style="flex:1;min-width:0;font-size:12.5px">${esc(a.texto)}
-          <span style="display:block;font-size:10px;opacity:.55;font-family:'JetBrains Mono',monospace">${esc(a.pedido)} · ${fmt(a.data)} · ${esc(a.por)}</span></span>
+          <span style="display:block;font-size:10pxfont-family:'JetBrains Mono',monospace">${esc(a.pedido)} · ${fmt(a.data)} · ${esc(a.por)}</span></span>
         <button class="hx" data-rmalt="${a.id}">remover</button>
       </div>`).join('')}</section>`}
     <section class="bl"><h5>Vale para</h5>
@@ -1867,7 +1867,7 @@ function modalBaixa(id){
       ${bxs.map(b => `<div class="hrow">
         <span class="hq">${b.qtd} ${esc(b.peca) || 'un'}</span>
         <span class="mono" style="font-size:12.5px">${fmt(b.data)}</span>
-        <span style="font-size:11.5px;opacity:.6">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
+        <span style="font-size:11.5px">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
         <button class="hx" data-del="${b.id}">remover</button>
       </div>`).join('')}</section>` : ''}
     ${fim ? `<section class="bl"><span class="dica">Concluído em ${fmt(dataFim(it, s))}.</span>
@@ -1875,7 +1875,7 @@ function modalBaixa(id){
     : `<section class="bl"><h5>Registrar saída</h5>
       <div class="chips2" id="pecas">
         <button type="button" class="c2 on" data-p="">Item completo</button>
-        ${pecasDe(it, s).map(p => `<button type="button" class="c2" data-p="${p}">${p}${pp[p] ? ` <b class="mono" style="font-size:10px;opacity:.7">${pp[p]}</b>` : ''}</button>`).join('')}
+        ${pecasDe(it, s).map(p => `<button type="button" class="c2" data-p="${p}">${p}${pp[p] ? ` <b class="mono" style="font-size:10px">${pp[p]}</b>` : ''}</button>`).join('')}
         <button type="button" class="c2" data-p="__nova" style="border-style:dashed">+ outra</button>
       </div>
       <input id="b_peca" placeholder="nome da peça" hidden style="width:100%;margin-top:8px;padding:9px 11px;
