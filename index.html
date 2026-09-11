@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aluminas · Programação de Produção</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+:root{
+  --bg:#07080a;--bg2:#0d1017;--bg3:#141820;--bg4:#1a1f28;--bg5:#212730;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.11);--border3:rgba(255,255,255,.22);
+  --text:#ffffff;--acc:#4d9fff;--acc2:#2d7fe0;
+  --green:#27c97e;--green-bg:rgba(39,201,126,.13);
+  --red:#f05555;--red-bg:rgba(240,85,85,.13);
+  --amber:#f5a623;--amber-bg:rgba(245,166,35,.13);
+  --roxo:#a77bf3;--roxo-bg:rgba(167,123,243,.13);
+  --gray:#3e4a58;--gray-bg:rgba(62,74,88,.22);
+  --rad:8px;--rad-lg:12px;--shadow:0 10px 48px rgba(0,0,0,.75);
+}
+[data-theme="light"]{
+  --bg:#eef0f4;--bg2:#fff;--bg3:#f4f6f9;--bg4:#e8eaee;--bg5:#dde0e6;
+  --border:rgba(0,0,0,.06);--border2:rgba(0,0,0,.11);--border3:rgba(0,0,0,.22);
+  --text:#000000;--acc:#1a65d6;--acc2:#1250b0;
+  --green:#15904f;--green-bg:rgba(21,144,79,.10);
+  --red:#cc2222;--red-bg:rgba(204,34,34,.08);
+  --amber:#a86b00;--amber-bg:rgba(168,107,0,.10);
+  --roxo:#6b3fc4;--roxo-bg:rgba(107,63,196,.10);
+  --gray:#6b7280;--gray-bg:rgba(107,114,128,.12);--shadow:0 10px 40px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body,body *{color:var(--text)!important}
+::placeholder{color:var(--text)!important;opacity:.45}
+option{background:var(--bg2)}
+html{font-size:17px}
+body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:30px;
+  width:100%;max-width:390px;box-shadow:var(--shadow)}
+.card h1{font-size:17px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;
+  display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--acc)}
+.card p.sub{font-size:13px;opacity:.6;margin-bottom:22px;font-weight:600}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:800;opacity:.65;margin-bottom:6px}
+.campo input{width:100%;padding:12px 13px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rad);font-size:15px}
+.campo input:focus{border-color:var(--acc);outline:none}
+.btn{padding:12px 16px;border-radius:var(--rad);font-weight:800;cursor:pointer;font-size:14px;
+  background:var(--bg3);border:1px solid var(--border2)}
+.btn:hover{border-color:var(--acc)}
+.btn.pri{background:rgba(77,159,255,.22);border:2px solid var(--acc)}
+.btn.pri:hover{background:rgba(77,159,255,.36)}
+.btn.verde{background:var(--green-bg);border:2px solid var(--green)}
+.btn.verde:hover{background:rgba(39,201,126,.28)}
+.btn.roxa{background:var(--roxo-bg);border:2px solid var(--roxo)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.w{width:100%;margin-top:8px}
+.erro{background:var(--red-bg);border:1px solid var(--red);border-radius:var(--rad);
+  padding:10px 12px;font-size:13px;font-weight:700;margin-top:12px}
+.cfg{margin-top:20px;padding-top:16px;border-top:1px solid var(--border2);font-size:12px;opacity:.6;
+  font-weight:600;line-height:1.5}
+
+/* ---------- app ---------- */
+header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex;align-items:center;
+  justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 18px;position:sticky;top:0;z-index:50}
+.logo{font-weight:800;font-size:14px;letter-spacing:.11em;text-transform:uppercase;
+  display:flex;align-items:center;gap:9px}
+.logo em{font-style:normal;opacity:.55}
+.hr{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.quem{font-size:12.5px;font-weight:700;background:var(--bg3);border:1px solid var(--border2);
+  padding:7px 12px;border-radius:var(--rad)}
+.quem b{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.65;display:block}
+.abas{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);padding:3px}
+.aba{padding:7px 13px;border:0;background:none;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;opacity:.6}
+.aba.on{background:var(--bg5);opacity:1}
+.mini{padding:8px 11px;font-size:13px;font-weight:700;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:var(--rad);cursor:pointer}
+.mini:hover{border-color:var(--acc)}
+.mini.on{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.14)}
+
+.wrap{padding:14px 18px 90px}
+.linha{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.cont{font-size:13.5px;font-weight:700;opacity:.75}
+.cont b{font-family:'JetBrains Mono',monospace;opacity:1}
+.busca{position:relative;flex:1 1 240px}
+.busca input{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--rad);font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12.5px;
+  font-weight:700;border:1px solid var(--border2);background:var(--bg3);cursor:pointer}
+.chip .d{width:8px;height:8px;border-radius:50%}
+.chip.on{border-width:2px}
+.chip.sem .d{background:var(--amber)} .chip.sem.on{background:var(--amber-bg);border-color:var(--amber)}
+.chip.pend .d{background:var(--red)} .chip.pend.on{background:var(--red-bg);border-color:var(--red)}
+.chip.ok .d{background:var(--green)} .chip.ok.on{background:var(--green-bg);border-color:var(--green)}
+
+.tw{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);overflow:hidden}
+.ts{overflow:auto;max-height:calc(100vh - 240px)}
+.ts::-webkit-scrollbar{width:7px;height:7px}
+.ts::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+table{border-collapse:collapse;min-width:100%}
+thead tr{position:sticky;top:0;background:var(--bg3);z-index:2}
+th{padding:9px 6px;text-align:left;font-size:10.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.07em;border-bottom:2px solid var(--border3);white-space:nowrap;opacity:.8}
+th.c{text-align:center;background:var(--gray-bg);padding:9px 3px;font-size:9.5px}
+th.crg{background:var(--green-bg)}
+tbody tr{border-bottom:1px solid var(--border2)}
+tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
+[data-theme="light"] tbody tr:nth-child(even){background:rgba(0,0,0,.02)}
+tbody tr:hover{background:rgba(77,159,255,.07)}
+tbody tr.sel{background:rgba(77,159,255,.13)!important}
+td{padding:7px 6px;font-size:13.5px;vertical-align:middle}
+td.c{text-align:center;background:var(--gray-bg);padding:5px 3px}
+tbody tr:nth-child(even) td.c{background:rgba(62,74,88,.3)}
+td.crg{background:var(--green-bg)}
+tbody tr:nth-child(even) td.crg{background:rgba(39,201,126,.17)}
+.sc{width:34px;text-align:center}
+.sc input{width:17px;height:17px;accent-color:var(--acc);cursor:pointer}
+.mono{font-family:'JetBrains Mono',monospace}
+.ped{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--acc)!important;white-space:nowrap}
+.it{font-weight:700;line-height:1.3;max-width:230px;word-break:break-word}
+.cp{font-size:11px;opacity:.55;font-family:'JetBrains Mono',monospace;line-height:1.4;max-width:220px;
+  word-break:break-word}
+.obs{font-size:11.5px;opacity:.7;max-width:140px}
+.pill{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  width:42px;min-height:34px;border-radius:6px;border:2px solid transparent;padding:3px 2px;
+  font-family:inherit;background:none}
+.pill .dd{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1.1}
+.pill .ic{font-size:12px;font-weight:900}
+.p-ok{background:var(--green-bg);border-color:var(--green)}
+.p-pe{background:var(--red-bg);border-color:var(--red)}
+.p-sk{background:var(--gray-bg);border-color:var(--border3)}
+.p-pa{background:var(--amber-bg);border-color:var(--amber)}
+button.pill{cursor:pointer}
+button.pill:hover{filter:brightness(1.3)}
+.tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:2px 7px;
+  border-radius:5px;text-transform:uppercase;border:1.5px solid}
+.t-cancel{background:var(--red-bg);border-color:var(--red)}
+.t-prio{background:var(--amber-bg);border-color:var(--amber)}
+.t-repro,.t-espec{background:var(--roxo-bg);border-color:var(--roxo)}
+.t-vinc{background:rgba(77,159,255,.13);border-color:var(--acc)}
+.t-insumo{background:var(--green-bg);border-color:var(--green)}
+.vazio{padding:48px 20px;text-align:center;font-size:14px;font-weight:600;opacity:.55;line-height:1.6}
+
+.ba{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--bg5);
+  border:1px solid var(--border3);border-radius:12px;padding:11px 14px;display:flex;align-items:center;
+  gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);font-size:13.5px;font-weight:700}
+.ba b{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--acc)!important}
+
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:80;backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:20px}
+.mb.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border3);border-radius:18px;width:100%;max-width:520px;
+  max-height:88vh;overflow-y:auto;box-shadow:var(--shadow)}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;
+  align-items:flex-start;gap:12px}
+.mh .et{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.7;margin-bottom:4px}
+.mh h3{font-size:18px;font-weight:800;line-height:1.25}
+.mh .sb{font-size:12px;opacity:.6;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.mx{background:var(--bg3);border:1px solid var(--border2);width:31px;height:31px;border-radius:9px;
+  font-size:16px;cursor:pointer;flex-shrink:0}
+.mbody{padding:6px 22px 22px}
+.bl{padding:15px 0 0}
+.bl+.bl{border-top:1px solid var(--border2);margin-top:13px}
+.bl h5{font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;opacity:.6;margin-bottom:9px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g2 .full{grid-column:1/-1}
+.g2 input,.g2 select,.g2 textarea{padding:10px 12px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rad);font-size:14px;width:100%}
+.g2 textarea{min-height:60px;resize:vertical}
+.step{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rad);padding:3px;width:max-content}
+.step button{width:38px;height:36px;border:0;background:none;font-size:20px;font-weight:700;cursor:pointer;border-radius:6px}
+.step button:hover:not(:disabled){background:var(--bg4)}
+.step button:disabled{opacity:.25;cursor:not-allowed}
+.step .v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;min-width:42px;text-align:center}
+.chips2{display:flex;gap:6px;flex-wrap:wrap}
+.c2{padding:7px 12px;border-radius:18px;font-size:12.5px;font-weight:700;background:var(--bg3);
+  border:1px solid var(--border2);cursor:pointer}
+.c2.on{background:var(--green-bg);border-color:var(--green);border-width:2px}
+.hrow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.hrow:last-child{border-bottom:0}
+.hq{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;background:var(--green-bg);
+  border:1px solid var(--green);padding:2px 8px;border-radius:5px;white-space:nowrap}
+.hx{margin-left:auto;background:none;border:0;font-size:11px;font-weight:700;cursor:pointer;
+  opacity:.6;padding:4px 7px;border-radius:5px}
+.hx:hover{background:var(--red-bg);opacity:1}
+.dica{display:block;font-size:11.5px;opacity:.55;font-weight:600;margin-top:8px;line-height:1.5}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.acoes .btn{flex:1 1 120px}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(8px);background:var(--bg5);
+  border:1px solid var(--border3);padding:12px 17px;border-radius:11px;font-size:13.5px;font-weight:700;
+  z-index:90;opacity:0;pointer-events:none;transition:.18s;box-shadow:var(--shadow);max-width:calc(100% - 30px)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#toast.err{border-color:var(--red);background:var(--red-bg)}
+@media(max-width:760px){html{font-size:15px}.wrap{padding:10px 10px 90px}}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login">
+  <div class="card">
+    <h1><span class="dot"></span>Aluminas</h1>
+    <p class="sub">Programação de Produção</p>
+    <div class="campo"><label for="usuario">Usuário</label>
+      <input id="usuario" type="text" autocomplete="username" autocapitalize="characters"
+             spellcheck="false" placeholder="JOÃO PEDRO"></div>
+    <div class="campo"><label for="senha">Senha</label><input id="senha" type="password" autocomplete="current-password"></div>
+    <button class="btn pri w" id="btEntrar">Entrar</button>
+    <div class="erro" id="loginErro" hidden></div>
+    <div class="cfg" id="cfgAviso" hidden>
+      Configure <b>SUPABASE_URL</b> e <b>SUPABASE_ANON_KEY</b> no topo do script deste arquivo.
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" hidden>
+<header>
+  <div class="logo"><span class="dot"></span><span id="tituloTela"></span></div>
+  <div class="hr">
+    <div class="abas" id="abas" hidden>
+      <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
+      <button class="aba" data-t="setor">RQ 200 · Tubular</button>
+    </div>
+    <span class="quem" id="quem"></span>
+    <button class="mini" id="btRecarregar" title="Recarregar do banco">↻</button>
+    <button class="mini" id="btTema">◐</button>
+    <button class="mini" id="btSair">Sair</button>
+  </div>
+</header>
+<div class="wrap" id="wrap"></div>
+</div>
+
+<div class="ba" id="ba" hidden>
+  <span><b id="baN"></b> <span id="baLbl">pedidos</span></span>
+  <span style="opacity:.6;font-weight:600;font-size:12.5px" id="baRes"></span>
+  <button class="btn" id="baLimpar" style="padding:7px 10px">limpar</button>
+  <button class="btn verde" id="baCarga" style="padding:9px 14px">Definir carga</button>
+</div>
+
+<div class="mb" id="mb"><div class="modal">
+  <div class="mh">
+    <div><div class="et" id="mEt"></div><h3 id="mT"></h3><div class="sb" id="mS"></div></div>
+    <button class="mx" id="mX">✕</button>
+  </div>
+  <div class="mbody" id="mBody"></div>
+</div></div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* =====================================================================
+   1. CONFIGURAÇÃO — preencha com os dados do seu projeto Supabase
+      (Project Settings › API)
+   ===================================================================== */
+const SUPABASE_URL      = 'https://puxrworbtqyheloqkehr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eHJ3b3JidHF5aGVsb3FrZWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwODQ5OTIsImV4cCI6MjEwNDY2MDk5Mn0.xO8ks67GzoYDy67CwqzkJ8mp6VOKPuLl-waI0aIYKwQ';
+
+/* ===================================================================== */
+const TEM_CFG = !SUPABASE_URL.includes('SEU-PROJETO') && !SUPABASE_ANON_KEY.includes('SUA-ANON');
+const sb = TEM_CFG ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const SET = ['FUS.','TUB.','PIN.','TEC.','MAD.','ATE.','MON.','OMB.','EMB.','EXP.'];
+const SETN = ['Fusão','Tubular','Pintura','Tecelagem','Marcenaria','Ateliê','Montagem','Ombrelone','Embalagem','Expedição'];
+const TIPOS = {cancel:'Cancelamento',prio:'Prioridade',repro:'Reprogramação',
+  vinc:'Vínculo',espec:'Especificação',insumo:'Insumo'};
+
+let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
+let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
+
+// 'JOÃO PEDRO' -> 'joao.pedro@aluminas.local'  (mesma regra da função email_interno no banco)
+const DOMINIO = '@aluminas.local';
+function emailInterno(usuario){
+  return usuario.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().toLowerCase().replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '') + DOMINIO;
+}
+
+const hoje = () => new Date().toISOString().slice(0,10);
+const fmt = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(2,4)}` : '—';
+const fmtC = s => s ? s.slice(8,10) + '<br>' + s.slice(5,7) : '';
+const dias = s => s ? Math.round((new Date(s+'T00:00:00') - new Date(hoje()+'T00:00:00'))/864e5) : null;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(t, err){
+  const e = document.getElementById('toast');
+  e.textContent = t; e.classList.toggle('err', !!err); e.classList.add('on');
+  clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 4200);
+}
+function erro(e){ console.error(e); toast(e?.message || String(e), true); }
+
+/* ---------------- LOGIN ---------------- */
+document.getElementById('cfgAviso').hidden = TEM_CFG;
+document.getElementById('btEntrar').onclick = entrar;
+document.getElementById('senha').onkeydown = e => { if(e.key === 'Enter') entrar(); };
+document.getElementById('usuario').onkeydown = e => { if(e.key === 'Enter') document.getElementById('senha').focus(); };
+document.getElementById('usuario').oninput = e => {
+  const p = e.target.selectionStart;
+  e.target.value = e.target.value.toUpperCase();
+  e.target.setSelectionRange(p, p);
+};
+async function entrar(){
+  const el = document.getElementById('loginErro'); el.hidden = true;
+  if(!TEM_CFG){ el.hidden = false; el.textContent = 'Configure a URL e a chave do Supabase no script.'; return; }
+  const b = document.getElementById('btEntrar'); b.disabled = true; b.textContent = 'Entrando…';
+  const usuario = document.getElementById('usuario').value.trim();
+  if(!usuario){ b.disabled = false; b.textContent = 'Entrar';
+    el.hidden = false; el.textContent = 'Informe o usuário.'; return; }
+  const { error } = await sb.auth.signInWithPassword({
+    email: emailInterno(usuario),
+    password: document.getElementById('senha').value
+  });
+  b.disabled = false; b.textContent = 'Entrar';
+  if(error){
+    el.hidden = false;
+    el.textContent = /invalid login/i.test(error.message)
+      ? 'Usuário ou senha incorretos.' : error.message;
+    return;
+  }
+  iniciar();
+}
+document.getElementById('btSair').onclick = async () => {
+  await sb.auth.signOut(); location.reload();
+};
+
+async function iniciar(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return;
+  const { data:p, error } = await sb.from('perfis').select('*').eq('id', user.id).single();
+  if(error || !p){
+    document.getElementById('loginErro').hidden = false;
+    document.getElementById('loginErro').textContent =
+      'Usuário sem perfil cadastrado. Ligue este usuário a um papel na tabela perfis.';
+    await sb.auth.signOut(); return;
+  }
+  perfil = p;
+  document.getElementById('login').hidden = true;
+  document.getElementById('app').hidden = false;
+  document.getElementById('quem').innerHTML =
+    `${esc(p.usuario || p.nome)}<b>${p.papel === 'setor' ? SETN[p.setor_id] : p.papel.toUpperCase()}</b>`;
+  tela = p.papel === 'setor' ? 'setor' : 'pcp';
+  document.getElementById('abas').hidden = p.papel !== 'pcp';
+  document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
+    tela = a.dataset.t; sel.clear(); pintar();
+  });
+  await carregar();
+}
+
+/* ---------------- CARGA DE DADOS ---------------- */
+async function carregar(){
+  document.getElementById('wrap').innerHTML = '<div class="vazio">Carregando…</div>';
+  const [itens, rot, bx, fec, alt, etp] = await Promise.all([
+    sb.from('itens').select('*').order('pedido'),
+    sb.from('roteiro').select('*'),
+    sb.from('baixas').select('*'),
+    sb.from('fechamentos').select('*'),
+    sb.from('alteracoes').select('*'),
+    sb.from('etapas').select('*')
+  ]);
+  for(const r of [itens, rot, bx, fec, alt, etp]) if(r.error) return erro(r.error);
+  alteracoes = alt.data || [];
+  const porItem = {};
+  (rot.data || []).forEach(r => ((porItem[r.item_id] = porItem[r.item_id] || {}).rot = porItem[r.item_id].rot || {}, porItem[r.item_id].rot[r.setor_id] = r.passa));
+  dados = (itens.data || []).map(i => {
+    const rt = (porItem[i.id] || {}).rot || {};
+    return Object.assign({}, i, {
+      rot: rt,
+      baixas: (bx.data || []).filter(b => b.item_id === i.id),
+      fech: (fec.data || []).filter(f => f.item_id === i.id),
+      etapas: (etp.data || []).filter(e => e.item_id === i.id)
+    });
+  });
+  pintar();
+}
+document.getElementById('btRecarregar').onclick = carregar;
+document.getElementById('btTema').onclick = () => {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+};
+
+/* ---------------- HELPERS DE ESTADO ---------------- */
+const passa = (it, s) => it.rot[s] !== false;
+const baixado = (it, s) => it.baixas.filter(b => b.setor_id === s).reduce((a, b) => a + b.qtd, 0);
+const completo = (it, s) => it.baixas.filter(b => b.setor_id === s && !b.peca).reduce((a, b) => a + b.qtd, 0);
+const fechado = (it, s) => it.fech.find(f => f.setor_id === s);
+function estado(it, s){
+  if(!passa(it, s)) return 'sk';
+  if(fechado(it, s) || completo(it, s) >= it.qtd) return 'ok';
+  if(baixado(it, s) > 0) return 'pa';
+  return 'pe';
+}
+function dataFim(it, s){
+  const f = fechado(it, s);
+  if(f) return f.data;
+  const b = it.baixas.filter(x => x.setor_id === s);
+  return b.length ? b[b.length-1].data : null;
+}
+function pronto(it){
+  let f = 0, t = 0;
+  for(let s = 0; s < 10; s++){ if(!passa(it, s)) continue; t++; if(estado(it, s) === 'ok') f++; }
+  return t ? Math.round(f / t * 100) : 100;
+}
+const altsDe = it => alteracoes.filter(a => a.pedido === it.pedido && (!a.itens || a.itens.includes(it.id)));
+function filtrar(){
+  let l = dados;
+  if(tela === 'setor'){
+    const s = perfil.papel === 'setor' ? perfil.setor_id : 1;
+    l = l.filter(i => passa(i, s));
+    if(filtro === 'pend') l = l.filter(i => ['pe','pa'].includes(estado(i, s)));
+    if(filtro === 'ok') l = l.filter(i => estado(i, s) === 'ok');
+  } else {
+    if(filtro === 'sem') l = l.filter(i => !i.data_carga);
+    if(filtro === 'ok') l = l.filter(i => i.data_carga);
+  }
+  if(busca){
+    const t = busca.toLowerCase().split(/\s+/).filter(Boolean);
+    l = l.filter(i => t.every(w => [i.pedido, i.item, i.composicao, i.cliente, i.carga,
+      i.classificacao, i.observacao].join(' ').toLowerCase().includes(w)));
+  }
+  return l;
+}
+
+/* ---------------- PINTAR ---------------- */
+function pintar(){
+  document.querySelectorAll('.aba').forEach(a => a.classList.toggle('on', a.dataset.t === tela));
+  document.getElementById('tituloTela').innerHTML = tela === 'pcp'
+    ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[perfil.papel === 'setor' ? perfil.setor_id : 1]}</em>`;
+  tela === 'pcp' ? telaPCP() : telaSetor();
+}
+
+function barraFiltro(chips){
+  return `<div class="linha">
+    <span class="cont" id="cont"></span>
+    <div class="busca"><input id="q" placeholder="Buscar pedido, item, composição, cliente…" value="${esc(busca)}"></div>
+    ${chips}
+  </div>`;
+}
+function ligarFiltro(){
+  const q = document.getElementById('q');
+  if(q){
+    q.oninput = e => { clearTimeout(q._t); const v = e.target.value;
+      q._t = setTimeout(() => { busca = v.trim(); pintar(); document.getElementById('q').focus(); }, 220); };
+  }
+  document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
+    filtro = filtro === b.dataset.f ? null : b.dataset.f; pintar();
+  });
+}
+
+/* ---------- RQ 213 (PCP) ---------- */
+function telaPCP(){
+  const podeEditar = perfil.papel === 'pcp';
+  const lista = filtrar();
+  const nSem = dados.filter(i => !i.data_carga).length;
+  document.getElementById('wrap').innerHTML =
+    (podeEditar ? `<div class="linha"><button class="btn pri" id="btNovo">+ Novo pedido</button>
+      <span class="dica" style="margin:0">O roteiro é aplicado sozinho a partir das regras já aprendidas.</span></div>` : '') +
+    barraFiltro(`<button class="chip sem ${filtro === 'sem' ? 'on' : ''}" data-f="sem"><span class="d"></span>Sem carga ${nSem}</button>
+      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Com carga ${dados.length - nSem}</button>`) +
+    `<div class="tw"><div class="ts"><table>
+      <thead><tr>
+        ${podeEditar ? '<th class="sc"><input type="checkbox" id="selTodos"></th>' : ''}
+        ${SET.map(s => `<th class="c">${s}</th>`).join('')}
+        <th class="c">Pronto</th>
+        <th>Data kanban</th><th>Pedido</th><th>Classificação</th>
+        <th class="crg">Data de carga</th><th class="crg">Carga</th>
+        <th>Qtd</th><th>Alteração</th><th>Item</th><th>Composição</th>
+        <th>Observação</th><th>Cliente</th>
+      </tr></thead><tbody>
+      ${lista.map(it => {
+        const p = pronto(it), d = dias(it.data_carga), as = altsDe(it);
+        const cor = p === 100 ? 'var(--green)' : p >= 50 ? 'var(--amber)' : 'var(--red)';
+        return `<tr class="${sel.has(it.pedido) ? 'sel' : ''}">
+          ${podeEditar ? `<td class="sc"><input type="checkbox" class="ck" data-p="${esc(it.pedido)}" ${sel.has(it.pedido) ? 'checked' : ''}></td>` : ''}
+          ${SET.map((_, s) => {
+            const e = estado(it, s);
+            const inner = e === 'ok' ? `<span class="dd">${fmtC(dataFim(it, s))}</span>`
+              : e === 'sk' ? '<span class="ic">×</span>'
+              : e === 'pa' ? `<span class="ic">${baixado(it, s)}/${it.qtd}</span>`
+              : '<span class="ic">—</span>';
+            return `<td class="c"><span class="pill p-${e}">${inner}</span></td>`;
+          }).join('')}
+          <td class="c"><b class="mono" style="color:${cor}!important">${p}%</b></td>
+          <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
+          <td class="ped">${esc(it.pedido)}</td>
+          <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
+          <td class="crg mono" style="font-size:12px;${d !== null && d < 0 ? 'font-weight:700' : ''}">${fmt(it.data_carga)}</td>
+          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">a definir</span>'}</td>
+          <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
+          <td>${as.map(a => `<span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span><div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>`).join('') || '<span style="opacity:.4">—</span>'}</td>
+          <td><div class="it">${esc(it.item)}</div></td>
+          <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
+          <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
+          <td style="font-size:11.5px;opacity:.7">${esc(it.cliente) || '—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div></div>` +
+    (lista.length ? '' : '<div class="vazio">Nenhum item. Use “Novo pedido” para criar o primeiro.</div>');
+
+  document.getElementById('cont').innerHTML =
+    `<b>${lista.length}</b> de ${dados.length} itens · <b>${nSem}</b> sem carga`;
+  ligarFiltro();
+  const bn = document.getElementById('btNovo');
+  if(bn) bn.onclick = modalNovo;
+  document.querySelectorAll('.ck').forEach(c => c.onchange = () => {
+    c.checked ? sel.add(c.dataset.p) : sel.delete(c.dataset.p); pintar();
+  });
+  const st = document.getElementById('selTodos');
+  if(st){
+    const peds = [...new Set(lista.map(i => i.pedido))];
+    st.checked = peds.length && peds.every(p => sel.has(p));
+    st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); pintar(); };
+  }
+  const ba = document.getElementById('ba');
+  ba.hidden = !(podeEditar && sel.size);
+  if(sel.size){
+    const its = dados.filter(i => sel.has(i.pedido));
+    document.getElementById('baN').textContent = sel.size;
+    document.getElementById('baLbl').textContent = sel.size > 1 ? 'pedidos' : 'pedido';
+    document.getElementById('baRes').textContent = `${its.length} itens`;
+  }
+}
+
+/* ---------- RQ 200 (setor) ---------- */
+function telaSetor(){
+  const s = perfil.papel === 'setor' ? perfil.setor_id : 1;
+  const podeBaixar = perfil.papel === 'setor' && perfil.setor_id === s;
+  const lista = filtrar();
+  const pend = dados.filter(i => passa(i, s) && ['pe','pa'].includes(estado(i, s))).length;
+  document.getElementById('wrap').innerHTML =
+    barraFiltro(`<button class="chip pend ${filtro === 'pend' ? 'on' : ''}" data-f="pend"><span class="d"></span>Pendentes ${pend}</button>
+      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Concluídos ${dados.filter(i => passa(i, s) && estado(i, s) === 'ok').length}</button>`) +
+    `<div class="tw"><div class="ts"><table>
+      <thead><tr>
+        <th class="c">Corte<br>início</th><th class="c">Corte<br>fim</th><th class="c">Entrega</th>
+        <th>Data kanban</th><th>Pedido</th><th>Classificação</th>
+        <th class="crg">Data de carga</th><th class="crg">Carga</th>
+        <th>Qtd</th><th>Alteração</th><th>Item</th><th>Composição</th><th>Observação</th>
+      </tr></thead><tbody>
+      ${lista.map(it => {
+        const e = estado(it, s), d = dias(it.data_carga), as = altsDe(it);
+        const ci = it.etapas.find(x => x.setor_id === s && x.etapa === 'corte_inicio');
+        const cf = it.etapas.find(x => x.setor_id === s && x.etapa === 'corte_fim');
+        const cel = (et, obj) => {
+          const inner = obj ? `<span class="dd">${fmtC(obj.data)}</span>` : '<span class="ic">—</span>';
+          const cls = obj ? 'p-ok' : 'p-pe';
+          return podeBaixar
+            ? `<td class="c"><button class="pill ${cls}" data-et="${et}" data-id="${it.id}">${inner}</button></td>`
+            : `<td class="c"><span class="pill ${cls}">${inner}</span></td>`;
+        };
+        const ent = e === 'ok' ? `<span class="dd">${fmtC(dataFim(it, s))}</span>`
+          : e === 'pa' ? `<span class="ic">${baixado(it, s)}/${it.qtd}</span>`
+          : '<span class="ic">—</span>';
+        return `<tr>
+          ${cel('corte_inicio', ci)}${cel('corte_fim', cf)}
+          <td class="c">${podeBaixar
+            ? `<button class="pill p-${e}" data-baixa="${it.id}">${ent}</button>`
+            : `<span class="pill p-${e}">${ent}</span>`}</td>
+          <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
+          <td class="ped">${esc(it.pedido)}</td>
+          <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
+          <td class="crg mono" style="font-size:12px">${fmt(it.data_carga)}${d !== null && d < 0 ? ' ⚠' : ''}</td>
+          <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">—</span>'}</td>
+          <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
+          <td>${as.map(a => `<span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span><div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>`).join('') || '<span style="opacity:.4">—</span>'}</td>
+          <td><div class="it">${esc(it.item)}</div></td>
+          <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
+          <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div></div>` +
+    (lista.length ? '' : `<div class="vazio">Nada no ${SETN[s].toLowerCase()} ainda.<br>Os itens aparecem aqui assim que o PCP lançar pedidos cujo roteiro passe por este setor.</div>`);
+
+  document.getElementById('cont').innerHTML =
+    `<b>${lista.length}</b> itens no ${SETN[s].toLowerCase()} · <b>${pend}</b> pendentes`;
+  ligarFiltro();
+  document.getElementById('ba').hidden = true;
+  document.querySelectorAll('[data-et]').forEach(b => b.onclick = () => modalEtapa(b.dataset.id, b.dataset.et));
+  document.querySelectorAll('[data-baixa]').forEach(b => b.onclick = () => modalBaixa(b.dataset.baixa));
+}
+
+/* ---------------- MODAIS ---------------- */
+const abrirM = (et, t, s, html) => {
+  document.getElementById('mEt').textContent = et;
+  document.getElementById('mT').textContent = t;
+  document.getElementById('mS').textContent = s || '';
+  document.getElementById('mBody').innerHTML = html;
+  document.getElementById('mb').classList.add('open');
+};
+const fecharM = () => document.getElementById('mb').classList.remove('open');
+document.getElementById('mX').onclick = fecharM;
+document.getElementById('mb').onclick = e => { if(e.target.id === 'mb') fecharM(); };
+document.addEventListener('keydown', e => { if(e.key === 'Escape') fecharM(); });
+
+function modalNovo(){
+  abrirM('RQ 213', 'Novo pedido', 'O roteiro vem das regras já aprendidas', `
+    <section class="bl"><div class="g2">
+      <input id="n_pedido" placeholder="Pedido — ex: PED119500">
+      <input id="n_classif" placeholder="Classificação" value="PEDIDO DE VENDA">
+      <input id="n_item" class="full" placeholder="Item — ex: POLTRONA DUDA">
+      <input id="n_comp" class="full" placeholder="Composição">
+      <input id="n_obs" class="full" placeholder="Observação (opcional)">
+      <input id="n_qtd" type="number" min="1" value="1" placeholder="Qtd">
+      <input id="n_kanban" type="date" value="${hoje()}">
+      <input id="n_cliente" class="full" placeholder="Cliente">
+    </div>
+    <span class="dica">A chave de importação é pedido + classificação + item + composição + observação.
+      Linhas repetidas ganham um número de sequência automático; o id interno é fixo e nunca muda.</span>
+    </section>
+    <section class="bl"><h5>Passa por quais setores</h5>
+      <div class="chips2" id="rotChips">
+        ${SET.map((s, i) => `<button type="button" class="c2 ${i === 1 ? 'on' : ''}" data-s="${i}">${s}</button>`).join('')}
+      </div>
+      <span class="dica">Para o teste, deixe só o tubular marcado.</span>
+    </section>
+    <div class="acoes">
+      <button class="btn pri" id="nSalvar">Criar pedido</button>
+      <button class="btn" onclick="document.getElementById('mb').classList.remove('open')">Cancelar</button>
+    </div>`);
+  document.querySelectorAll('#rotChips .c2').forEach(b =>
+    b.onclick = () => b.classList.toggle('on'));
+  document.getElementById('nSalvar').onclick = salvarNovo;
+}
+async function salvarNovo(){
+  const v = id => document.getElementById(id).value.trim();
+  if(!v('n_pedido') || !v('n_item')) return toast('Pedido e item são obrigatórios', true);
+  const b = document.getElementById('nSalvar'); b.disabled = true; b.textContent = 'Criando…';
+  const { data, error } = await sb.from('itens').insert({
+    pedido:v('n_pedido').toUpperCase(), classificacao:v('n_classif').toUpperCase(),
+    item:v('n_item').toUpperCase(), composicao:v('n_comp').toUpperCase(),
+    observacao:v('n_obs').toUpperCase(),
+    qtd:Number(document.getElementById('n_qtd').value) || 1,
+    data_kanban:v('n_kanban') || null, cliente:v('n_cliente').toUpperCase()
+  }).select().single();
+  b.disabled = false; b.textContent = 'Criar pedido';
+  if(error) return erro(error);
+  const marcados = [...document.querySelectorAll('#rotChips .c2')].map((x, i) => x.classList.contains('on'));
+  const off = marcados.map((m, i) => m ? null : i).filter(i => i !== null);
+  if(off.length){
+    const { error:e2 } = await sb.from('roteiro').upsert(
+      off.map(s => ({item_id:data.id, setor_id:s, passa:false})));
+    if(e2) erro(e2);
+  }
+  fecharM();
+  toast(`${data.pedido} criado · chave ${data.chave_import.slice(0, 28)}… seq ${data.seq}`);
+  await carregar();
+}
+
+/* ---------- carga ---------- */
+document.getElementById('baLimpar').onclick = () => { sel.clear(); pintar(); };
+document.getElementById('baCarga').onclick = () => {
+  const its = dados.filter(i => sel.has(i.pedido));
+  const cargas = [...new Map(dados.filter(i => i.carga && i.data_carga)
+    .map(i => [i.carga + '|' + i.data_carga, {c:i.carga, d:i.data_carga}])).values()];
+  abrirM('Carga', 'Definir carga', `${sel.size} pedido(s) · ${its.length} itens`, `
+    ${cargas.length ? `<section class="bl"><h5>Cargas já criadas</h5>
+      <div class="chips2">${cargas.map(c => `<button type="button" class="c2" data-c="${esc(c.c)}" data-d="${c.d}">${esc(c.c)} · ${fmt(c.d)}</button>`).join('')}</div>
+    </section>` : ''}
+    <section class="bl"><h5>Carga nova</h5>
+      <div class="g2">
+        <input id="c_num" placeholder="Número — 3448">
+        <input id="c_data" type="date">
+        <input id="c_dest" class="full" placeholder="Destino — SÃO PAULO, MISTA…">
+      </div>
+    </section>
+    <div class="acoes">
+      <button class="btn verde" id="cSalvar">Definir carga</button>
+      <button class="btn" id="cTirar">Tirar da carga</button>
+    </div>`);
+  document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
+    document.getElementById('c_num').value = b.dataset.c.split(' ')[0];
+    document.getElementById('c_dest').value = b.dataset.c.split(' ').slice(1).join(' ');
+    document.getElementById('c_data').value = b.dataset.d;
+  });
+  document.getElementById('cSalvar').onclick = async () => {
+    const num = document.getElementById('c_num').value.trim();
+    const dest = document.getElementById('c_dest').value.trim().toUpperCase();
+    const dt = document.getElementById('c_data').value;
+    if(!num || !dest || !dt) return toast('Preencha número, destino e data', true);
+    const { error } = await sb.from('itens')
+      .update({carga:`${num} ${dest}`, data_carga:dt}).in('pedido', [...sel]);
+    if(error) return erro(error);
+    fecharM(); sel.clear(); toast(`Carga ${num} ${dest} definida`); await carregar();
+  };
+  document.getElementById('cTirar').onclick = async () => {
+    const { error } = await sb.from('itens').update({carga:null, data_carga:null}).in('pedido', [...sel]);
+    if(error) return erro(error);
+    fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar();
+  };
+};
+
+/* ---------- etapa (corte) ---------- */
+function modalEtapa(id, etapa){
+  const it = dados.find(x => x.id === id);
+  const s = perfil.setor_id;
+  const atual = it.etapas.find(x => x.setor_id === s && x.etapa === etapa);
+  const nome = etapa === 'corte_inicio' ? 'Corte início' : 'Corte fim';
+  abrirM(nome, it.item, `${it.pedido} · ${it.composicao || 'sem composição'}`, `
+    <section class="bl">
+      <div class="g2"><input type="date" id="e_data" class="full" value="${atual ? atual.data : hoje()}"></div>
+      <div class="acoes">
+        <button class="btn verde" id="eSalvar">${atual ? 'Alterar data' : 'Registrar'}</button>
+        ${atual ? '<button class="btn" id="eLimpar">Limpar</button>' : ''}
+      </div>
+    </section>`);
+  document.getElementById('eSalvar').onclick = async () => {
+    const { error } = await sb.from('etapas').upsert({
+      item_id:id, setor_id:s, etapa, data:document.getElementById('e_data').value,
+      por:perfil.nome
+    }, {onConflict:'item_id,setor_id,etapa'});
+    if(error) return erro(error);
+    fecharM(); toast(`${nome} registrado`); await carregar();
+  };
+  const bl = document.getElementById('eLimpar');
+  if(bl) bl.onclick = async () => {
+    const { error } = await sb.from('etapas').delete()
+      .match({item_id:id, setor_id:s, etapa});
+    if(error) return erro(error);
+    fecharM(); toast(`${nome} limpo`); await carregar();
+  };
+}
+
+/* ---------- baixa ---------- */
+function modalBaixa(id){
+  alvo = dados.find(x => x.id === id);
+  const s = perfil.setor_id;
+  const it = alvo, falta = it.qtd - completo(it, s);
+  passo = Math.max(1, Math.min(1, falta));
+  const bxs = it.baixas.filter(b => b.setor_id === s);
+  const fim = fechado(it, s) || completo(it, s) >= it.qtd;
+  abrirM(`Entrega · ${SETN[s]}`, it.item,
+    `${it.pedido} · ${it.qtd} un · carga ${fmt(it.data_carga)}`, `
+    ${bxs.length ? `<section class="bl"><h5>Já saiu</h5>
+      ${bxs.map(b => `<div class="hrow">
+        <span class="hq">${b.qtd} ${esc(b.peca) || 'un'}</span>
+        <span class="mono" style="font-size:12.5px">${fmt(b.data)}</span>
+        <span style="font-size:11.5px;opacity:.6">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
+        <button class="hx" data-del="${b.id}">remover</button>
+      </div>`).join('')}</section>` : ''}
+    ${fim ? `<section class="bl"><span class="dica">Concluído em ${fmt(dataFim(it, s))}.</span>
+      <div class="acoes"><button class="btn" id="bReabrir">Reabrir item</button></div></section>`
+    : `<section class="bl"><h5>Registrar saída</h5>
+      <div class="chips2" id="pecas">
+        <button type="button" class="c2 on" data-p="">Item completo</button>
+        ${['encosto','assento','estrutura','aro','regulagem'].map(p => `<button type="button" class="c2" data-p="${p}">${p}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+        <div class="step">
+          <button type="button" id="bMenos">−</button>
+          <span class="v" id="bVal">${passo}</span>
+          <button type="button" id="bMais">+</button>
+        </div>
+        <input type="date" id="b_data" value="${hoje()}" style="padding:9px 11px;background:var(--bg3);
+          border:1px solid var(--border2);border-radius:var(--rad)">
+      </div>
+      <span class="dica" id="bSub">${falta} de ${it.qtd} ainda não saíram</span>
+      <input id="b_obs" placeholder="observação (opcional)" style="width:100%;margin-top:10px;padding:10px 12px;
+        background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad)">
+      <div class="acoes">
+        <button class="btn verde" id="bReg">Registrar <span id="bQ">${passo}</span></button>
+        ${bxs.length ? '<button class="btn" id="bConcluir">Concluir item</button>'
+          : `<button class="btn" id="bTudo">Sair tudo (${falta})</button>`}
+        <button class="btn" id="bNaoPassa">Não passa aqui</button>
+      </div></section>`}`);
+
+  let peca = '';
+  document.querySelectorAll('#pecas .c2').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#pecas .c2').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); peca = b.dataset.p;
+    document.getElementById('bSub').textContent = peca
+      ? 'peça avulsa — não fecha a linha' : `${falta} de ${it.qtd} ainda não saíram`;
+  });
+  const upd = () => { document.getElementById('bVal').textContent = passo;
+    document.getElementById('bQ').textContent = passo; };
+  const bm = document.getElementById('bMenos'), bp = document.getElementById('bMais');
+  if(bm) bm.onclick = () => { passo = Math.max(1, passo - 1); upd(); };
+  if(bp) bp.onclick = () => { passo = Math.min(it.qtd, passo + 1); upd(); };
+
+  const reg = async (qtd, pc) => {
+    const { error } = await sb.from('baixas').insert({
+      item_id:id, setor_id:s, data:document.getElementById('b_data').value,
+      qtd, peca:pc || null, obs:document.getElementById('b_obs').value.trim() || null,
+      por:perfil.nome, por_id:perfil.id
+    });
+    if(error) return erro(error);
+    fecharM(); toast(`${qtd} ${pc || 'un'} registrado`); await carregar();
+  };
+  const br = document.getElementById('bReg');
+  if(br) br.onclick = () => reg(passo, peca);
+  const bt = document.getElementById('bTudo');
+  if(bt) bt.onclick = () => reg(falta, '');
+  const bc = document.getElementById('bConcluir');
+  if(bc) bc.onclick = async () => {
+    const { error } = await sb.from('fechamentos').upsert({
+      item_id:id, setor_id:s, data:document.getElementById('b_data').value, por:perfil.nome
+    }, {onConflict:'item_id,setor_id'});
+    if(error) return erro(error);
+    fecharM(); toast(`${it.item} concluído`); await carregar();
+  };
+  const bre = document.getElementById('bReabrir');
+  if(bre) bre.onclick = async () => {
+    const { error } = await sb.from('fechamentos').delete().match({item_id:id, setor_id:s});
+    if(error) return erro(error);
+    fecharM(); toast('Item reaberto'); await carregar();
+  };
+  const bnp = document.getElementById('bNaoPassa');
+  if(bnp) bnp.onclick = async () => {
+    const r1 = await sb.from('roteiro').update({passa:false}).match({item_id:id, setor_id:s});
+    if(r1.error) return erro(r1.error);
+    await sb.from('recusas').insert({item_id:id, setor_id:s,
+      motivo:'não passa por aqui', por:perfil.nome});
+    fecharM(); toast('Marcado como não passa — o PCP recebe o aviso'); await carregar();
+  };
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('baixas').delete().eq('id', b.dataset.del);
+    if(error) return erro(error);
+    fecharM(); toast('Baixa removida'); await carregar();
+  });
+}
+
+/* ---------------- sessão existente ---------------- */
+if(TEM_CFG) sb.auth.getSession().then(({ data }) => { if(data.session) iniciar(); });
+</script>
+</body>
+</html>
