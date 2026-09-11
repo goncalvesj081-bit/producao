@@ -265,7 +265,7 @@ const SUPABASE_URL      = 'https://puxrworbtqyheloqkehr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1eHJ3b3JidHF5aGVsb3FrZWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwODQ5OTIsImV4cCI6MjEwNDY2MDk5Mn0.xO8ks67GzoYDy67CwqzkJ8mp6VOKPuLl-waI0aIYKwQ';
 
 /* ===================================================================== */
-const TEM_CFG = !SUPABASE_URL.includes('SEU-PROJETO') && !SUPABASE_ANON_KEY.includes('SUA-ANON');
+const TEM_CFG = /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 40;
 const sb = TEM_CFG ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const SET = ['FUS.','TUB.','PIN.','TEC.','MAD.','ATE.','MON.','OMB.','EMB.','EXP.'];
 const SETN = ['Fusão','Tubular','Pintura','Tecelagem','Marcenaria','Ateliê','Montagem','Ombrelone','Embalagem','Expedição'];
@@ -276,11 +276,10 @@ let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
 
 // 'JOÃO PEDRO' -> 'joao.pedro@aluminas.local'  (mesma regra da função email_interno no banco)
-const DOMINIO = '@aluminas.local';
 function emailInterno(usuario){
   return usuario.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .trim().toLowerCase().replace(/[^a-z0-9]+/g, '.')
-    .replace(/^\.+|\.+$/g, '') + DOMINIO;
+    .replace(/^\.+|\.+$/g, '') + '@aluminas.local';
 }
 
 const hoje = () => new Date().toISOString().slice(0,10);
@@ -301,11 +300,13 @@ document.getElementById('cfgAviso').hidden = TEM_CFG;
 document.getElementById('btEntrar').onclick = entrar;
 document.getElementById('senha').onkeydown = e => { if(e.key === 'Enter') entrar(); };
 document.getElementById('usuario').onkeydown = e => { if(e.key === 'Enter') document.getElementById('senha').focus(); };
-document.getElementById('usuario').oninput = e => {
-  const p = e.target.selectionStart;
-  e.target.value = e.target.value.toUpperCase();
-  e.target.setSelectionRange(p, p);
-};
+document.getElementById('usuario').addEventListener('input', e => {
+  const el = e.target, p = el.selectionStart;
+  const up = el.value.toUpperCase();
+  if(up === el.value) return;
+  el.value = up;
+  try { el.setSelectionRange(p, p); } catch(_){}
+});
 async function entrar(){
   const el = document.getElementById('loginErro'); el.hidden = true;
   if(!TEM_CFG){ el.hidden = false; el.textContent = 'Configure a URL e a chave do Supabase no script.'; return; }
