@@ -702,7 +702,7 @@ function feed(){
   el.querySelectorAll('[data-rma]').forEach(b => b.onclick = async () => {
     const { error } = await sb.from('alteracoes').delete().eq('id', b.dataset.rma);
     if(error) return erro(error);
-    toast('Alteração removida'); await carregar();
+    toast('Alteração removida'); await carregar(true);
   });
   el.querySelectorAll('[data-eda]').forEach(b => b.onclick = () => {
     const a = alteracoes.find(x => x.id === Number(b.dataset.eda));
@@ -1073,7 +1073,7 @@ async function rapidoEtapa(id, k){
     data:DATA, por:perfil.nome}, {onConflict:'item_id,setor_id,etapa'});
   if(error) return erro(error);
   toast(`${nomeEtapa(k)} · ${fmt(DATA)} · ${it.item}`);
-  await carregar();
+  await carregar(true);
   ligarTempoReal();
 }
 async function rapidoBaixa(id){
@@ -1084,7 +1084,7 @@ async function rapidoBaixa(id){
     qtd:falta, por:perfil.nome, por_id:perfil.id});
   if(error) return erro(error);
   toast(`${falta} un · ${fmt(DATA)} · ${it.item}`);
-  await carregar();
+  await carregar(true);
   ligarTempoReal();
 }
 
@@ -1152,7 +1152,7 @@ async function salvarNovo(){
   }
   fecharM();
   toast(`${data.pedido} criado · chave ${data.chave_import.slice(0, 28)}… seq ${data.seq}`);
-  await carregar();
+  await carregar(true);
   ligarTempoReal();
 }
 
@@ -1209,7 +1209,7 @@ function modalCarga(){
       const { error } = await sb.from('itens').update({carga:nova, data_carga:nd})
         .in('id', alvos.map(i => i.id));
       if(error) return erro(error);
-      fecharM(); sel.clear(); toast(`Carga corrigida — ${alvos.length} itens`); await carregar();
+      fecharM(); sel.clear(); toast(`Carga corrigida — ${alvos.length} itens`); await carregar(true);
     };
   });
   document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
@@ -1225,12 +1225,12 @@ function modalCarga(){
     const { error } = await sb.from('itens')
       .update({carga:`${num} ${dest}`, data_carga:dt}).in('pedido', [...sel]);
     if(error) return erro(error);
-    fecharM(); sel.clear(); toast(`Carga ${num} ${dest} definida`); await carregar();
+    fecharM(); sel.clear(); toast(`Carga ${num} ${dest} definida`); await carregar(true);
   };
   document.getElementById('cTirar').onclick = async () => {
     const { error } = await sb.from('itens').update({carga:null, data_carga:null}).in('pedido', [...sel]);
     if(error) return erro(error);
-    fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar();
+    fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar(true);
   };
 }
 
@@ -1407,7 +1407,7 @@ async function importar(){
   }
   previa = null; fecharM();
   toast(`${feitos} itens importados`);
-  await carregar();
+  await carregar(true);
 }
 function classificarAlt(t){
   const s = (t || '').toUpperCase();
@@ -1476,7 +1476,7 @@ async function decidirRecusa(r, acao){
   toast(acao === 'devolvida' ? `Devolvido ao ${SETN[r.setor_id].toLowerCase()}`
     : acao === 'regra' ? `Regra corrigida: ${it.item} não passa mais pelo ${SETN[r.setor_id].toLowerCase()}`
     : 'Recusa aceita nesta linha');
-  await carregar();
+  await carregar(true);
   ligarTempoReal();
 }
 
@@ -1494,7 +1494,7 @@ document.getElementById('baCorte').onclick = async () => {
   if(e2) return erro(e2);
   sel.clear();
   toast(`Lote ${fmt(hoje())} · ${its.length} itens liberados para o corte`);
-  await carregar();
+  await carregar(true);
   ligarTempoReal();
 };
 
@@ -1714,7 +1714,7 @@ function modalAlt(itemClicado, editar){
   document.querySelectorAll('[data-rmalt]').forEach(b => b.onclick = async () => {
     const { error } = await sb.from('alteracoes').delete().eq('id', b.dataset.rmalt);
     if(error) return erro(error);
-    fecharM(); toast('Alteração removida'); await carregar();
+    fecharM(); toast('Alteração removida'); await carregar(true);
   });
   pintarSet(); pintarItens(); val();
   if(editar) setTimeout(val, 0);
@@ -1727,7 +1727,7 @@ function modalAlt(itemClicado, editar){
         itens: escopo === 'itens' ? [...itens] : null,
         editado_por:perfil.nome, editado_em:hoje()}).eq('id', editar.id);
       if(error) return erro(error);
-      fecharM(); sel.clear(); toast('Alteração corrigida'); return carregar();
+      fecharM(); sel.clear(); toast('Alteração corrigida'); return carregar(true);
     }
     const linhas = [...sel].map(p => ({
       pedido:p, tipo, texto,
@@ -1742,7 +1742,7 @@ function modalAlt(itemClicado, editar){
     if(error) return erro(error);
     fecharM(); sel.clear();
     toast(`${TIPOS[tipo]} lançada em ${linhas.length} pedido(s)`);
-    await carregar();
+    await carregar(true);
   };
 }
 
@@ -1770,14 +1770,14 @@ function modalEtapa(id, etapa){
       por:perfil.nome
     }, {onConflict:'item_id,setor_id,etapa'});
     if(error) return erro(error);
-    fecharM(); toast(`${nome} registrado`); await carregar();
+    fecharM(); toast(`${nome} registrado`); await carregar(true);
   };
   const bl = document.getElementById('eLimpar');
   if(bl) bl.onclick = async () => {
     const { error } = await sb.from('etapas').delete()
       .match({item_id:id, setor_id:s, etapa});
     if(error) return erro(error);
-    fecharM(); toast(`${nome} limpo`); await carregar();
+    fecharM(); toast(`${nome} limpo`); await carregar(true);
   };
 }
 
@@ -1852,7 +1852,7 @@ function modalBaixa(id){
       por:perfil.nome, por_id:perfil.id
     });
     if(error) return erro(error);
-    fecharM(); toast(`${qtd} ${pc || 'un'} registrado`); await carregar();
+    fecharM(); toast(`${qtd} ${pc || 'un'} registrado`); await carregar(true);
   };
   const br = document.getElementById('bReg');
   if(br) br.onclick = () => reg(passo, peca);
@@ -1864,13 +1864,13 @@ function modalBaixa(id){
       item_id:id, setor_id:s, data:document.getElementById('b_data').value, por:perfil.nome
     }, {onConflict:'item_id,setor_id'});
     if(error) return erro(error);
-    fecharM(); toast(`${it.item} concluído`); await carregar();
+    fecharM(); toast(`${it.item} concluído`); await carregar(true);
   };
   const bre = document.getElementById('bReabrir');
   if(bre) bre.onclick = async () => {
     const { error } = await sb.from('fechamentos').delete().match({item_id:id, setor_id:s});
     if(error) return erro(error);
-    fecharM(); toast('Item reaberto'); await carregar();
+    fecharM(); toast('Item reaberto'); await carregar(true);
   };
   const bnp = document.getElementById('bNaoPassa');
   if(bnp) bnp.onclick = async () => {
@@ -1878,12 +1878,12 @@ function modalBaixa(id){
     if(r1.error) return erro(r1.error);
     await sb.from('recusas').insert({item_id:id, setor_id:s,
       motivo:'não passa por aqui', por:perfil.nome});
-    fecharM(); toast('Marcado como não passa — o PCP recebe o aviso'); await carregar();
+    fecharM(); toast('Marcado como não passa — o PCP recebe o aviso'); await carregar(true);
   };
   document.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
     const { error } = await sb.from('baixas').delete().eq('id', b.dataset.del);
     if(error) return erro(error);
-    fecharM(); toast('Baixa removida'); await carregar();
+    fecharM(); toast('Baixa removida'); await carregar(true);
   });
 }
 
