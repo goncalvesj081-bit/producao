@@ -102,6 +102,7 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 .chip.sem .d{background:var(--amber)} .chip.sem.on{background:var(--amber-bg);border-color:var(--amber)}
 .chip.pend .d{background:var(--red)} .chip.pend.on{background:var(--red-bg);border-color:var(--red)}
 .chip.ok .d{background:var(--green)} .chip.ok.on{background:var(--green-bg);border-color:var(--green)}
+.chip.fila .d{background:var(--acc)} .chip.fila.on{background:rgba(77,159,255,.16);border-color:var(--acc)}
 
 .tw{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);overflow:hidden}
 .ts{overflow:auto;max-height:calc(100vh - 240px)}
@@ -126,7 +127,7 @@ tbody tr:nth-child(even) td.crg{background:rgba(39,201,126,.17)}
 .sc{width:34px;text-align:center}
 .sc input{width:17px;height:17px;accent-color:var(--acc);cursor:pointer}
 .mono{font-family:'JetBrains Mono',monospace}
-.ped{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--acc)!important;white-space:nowrap}
+.ped{font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
 .it{font-weight:700;line-height:1.3;max-width:230px;word-break:break-word}
 .cp{font-size:11px;opacity:.55;font-family:'JetBrains Mono',monospace;line-height:1.4;max-width:220px;
   word-break:break-word}
@@ -136,12 +137,20 @@ tbody tr:nth-child(even) td.crg{background:rgba(39,201,126,.17)}
   font-family:inherit;background:none}
 .pill .dd{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1.1}
 .pill .ic{font-size:12px;font-weight:900}
+.pct{display:flex;flex-direction:column;align-items:center;gap:3px}
+.pct b{font-size:13px}
+.bar{width:40px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;display:block;
+  border:1px solid var(--border2)}
+.bar i{display:block;height:100%;border-radius:2px}
 .p-ok{background:var(--green-bg);border-color:var(--green)}
 .p-pe{background:var(--red-bg);border-color:var(--red)}
 .p-sk{background:var(--gray-bg);border-color:var(--border3)}
 .p-pa{background:var(--amber-bg);border-color:var(--amber)}
 button.pill{cursor:pointer}
 button.pill:hover{filter:brightness(1.3)}
+.celbt{background:none;border:1px solid transparent;border-radius:var(--rad);padding:5px 7px;
+  cursor:pointer;text-align:left;width:100%;min-width:150px}
+.celbt:hover{border-color:var(--roxo);background:var(--roxo-bg)}
 .tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:2px 7px;
   border-radius:5px;text-transform:uppercase;border:1.5px solid}
 .t-cancel{background:var(--red-bg);border-color:var(--red)}
@@ -154,7 +163,7 @@ button.pill:hover{filter:brightness(1.3)}
 .ba{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--bg5);
   border:1px solid var(--border3);border-radius:12px;padding:11px 14px;display:flex;align-items:center;
   gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);font-size:13.5px;font-weight:700}
-.ba b{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--acc)!important}
+.ba b{font-family:'JetBrains Mono',monospace;font-size:15px}
 
 .mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:80;backdrop-filter:blur(10px);
   align-items:center;justify-content:center;padding:20px}
@@ -202,6 +211,72 @@ button.pill:hover{filter:brightness(1.3)}
   z-index:90;opacity:0;pointer-events:none;transition:.18s;box-shadow:var(--shadow);max-width:calc(100% - 30px)}
 #toast.on{opacity:1;transform:translateX(-50%)}
 #toast.err{border-color:var(--red);background:var(--red-bg)}
+
+/* ---- acrescentado na versão completa ---- */
+.dataseg{display:flex;align-items:center;gap:2px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--rad);padding:3px}
+.dataseg button{padding:6px 11px;font-size:12.5px;font-weight:700;background:none;border:0;
+  border-radius:6px;cursor:pointer;opacity:.6}
+.dataseg button.on{background:var(--bg5);opacity:1}
+.dataseg button i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.65;margin-left:4px}
+.dataseg.alt{border-color:var(--amber);border-width:2px;background:var(--amber-bg)}
+.dataseg .outra{position:relative;display:flex;align-items:center}
+.dataseg .outra span{padding:6px 11px;font-size:12.5px;font-weight:700;opacity:.6;cursor:pointer}
+.dataseg .outra input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.avisoData{padding:8px 18px;font-size:12.5px;font-weight:700;background:var(--amber-bg);
+  border-bottom:1px solid var(--amber)}
+.avisoData[hidden]{display:none}
+.avisoData button{background:none;border:0;font-weight:800;text-decoration:underline;cursor:pointer;
+  font-size:12px;margin-left:10px}
+.fsel{padding:8px 10px;font-size:12.5px;font-weight:600;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--rad);cursor:pointer;max-width:180px}
+.fsel.on{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.12)}
+.flimpar{padding:8px 12px;font-size:12.5px;font-weight:700;background:none;border:1px solid var(--red);
+  border-radius:var(--rad);cursor:pointer}
+.flimpar[hidden]{display:none}
+th[data-col]{cursor:pointer;user-select:none}
+th[data-col]:hover{opacity:1}
+.ordm{font-size:9px;margin-left:4px;opacity:.9}
+.p-rec{background:var(--red-bg);border-color:var(--red);cursor:pointer;
+  animation:bater 2.4s ease-in-out infinite}
+@keyframes bater{0%,100%{box-shadow:0 0 0 0 rgba(240,85,85,0)}50%{box-shadow:0 0 0 3px rgba(240,85,85,.22)}}
+@media(prefers-reduced-motion:reduce){.p-rec{animation:none}}
+.p-parado{background:var(--red-bg);border-color:var(--red);cursor:pointer;
+  animation:bater 2.4s ease-in-out infinite}
+.p-parado .dd{font-size:8.5px}
+.chip.rec{border-color:var(--red)} .chip.rec .d{background:var(--red)}
+.chip.rec.on{background:var(--red-bg);border-width:2px}
+.chip.parado{border-color:var(--red)} .chip.parado .d{background:var(--red)}
+.chip.parado.on{background:var(--red-bg);border-width:2px}
+.chip.morta{border-color:var(--acc)} .chip.morta.on{background:rgba(77,159,255,.14);border-width:2px}
+.main2{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+.main2.compainel{grid-template-columns:1fr 310px}
+@media(max-width:1150px){.main2.compainel{grid-template-columns:1fr}}
+.lateral{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);padding:15px;
+  position:sticky;top:70px}
+.lateral h3{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;opacity:.6;margin-bottom:11px}
+.feed{display:flex;flex-direction:column;gap:9px;max-height:calc(100vh - 210px);overflow-y:auto}
+.fd{border:1px solid var(--border2);border-radius:var(--rad);padding:10px 11px;background:var(--bg3)}
+.fd-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap}
+.fd-ped{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700}
+.fd-txt{font-size:12.5px;font-weight:600;line-height:1.4}
+.fd-meta{font-size:10px;opacity:.55;margin-top:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.fd-ed{margin-left:auto;background:none;border:0;font-size:11px;font-weight:700;cursor:pointer;
+  text-decoration:underline;padding:3px 5px}
+.pv{flex:1 1 110px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);padding:10px 11px}
+.pv.forte{border-color:var(--green);border-width:2px;background:var(--green-bg)}
+.pv .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;opacity:.65}
+.pv .v{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;margin-top:3px}
+.motivo{background:var(--bg3);border:1px solid var(--border2);border-left:4px solid var(--red);
+  border-radius:var(--rad);padding:10px 12px;font-size:13px;font-weight:600;line-height:1.45}
+.alerta{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--rad);
+  padding:10px 12px;font-size:12.5px;font-weight:700;margin-top:12px;line-height:1.45}
+.alerta.grave{background:var(--red-bg);border-color:var(--red)}
+.btn.vermelha{background:var(--red-bg);border:2px solid var(--red)}
+.atual{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--green);
+  border-radius:var(--rad);background:var(--green-bg);margin-bottom:7px}
+.atual button{margin-left:auto;background:none;border:0;font-weight:800;font-size:11.5px;
+  cursor:pointer;text-decoration:underline}
 @media(max-width:760px){html{font-size:15px}.wrap{padding:10px 10px 90px}}
 </style>
 </head>
@@ -234,20 +309,36 @@ button.pill:hover{filter:brightness(1.3)}
       <button class="aba" data-t="setor">RQ 200 · Tubular</button>
     </div>
     <span class="quem" id="quem"></span>
+    <div class="dataseg" id="dataseg" hidden>
+      <button data-dd="0" class="on">Hoje <i></i></button>
+      <button data-dd="1">Ontem <i></i></button>
+      <label class="outra"><input type="date" id="dtOutra"><span>Outra</span></label>
+    </div>
+    <button class="mini" id="btPainel" hidden>Alterações</button>
     <button class="mini" id="btEditar" hidden></button>
     <button class="mini" id="btRecarregar" title="Recarregar do banco">↻</button>
     <button class="mini" id="btTema">◐</button>
     <button class="mini" id="btSair">Sair</button>
   </div>
 </header>
+<div class="avisoData" id="avisoData" hidden>
+  Lançando com a data de <b id="avisoDataTxt"></b> — todas as baixas desta sessão saem com essa data.
+  <button id="voltarHoje">voltar para hoje</button>
+</div>
 <div class="faixa" id="faixa"></div>
-<div class="wrap" id="wrap"></div>
+<div class="wrap"><div class="main2" id="main2">
+  <div id="conteudo"></div>
+  <aside class="lateral" id="lateral" hidden><h3>Alterações ativas</h3><div class="feed" id="feed"></div></aside>
+</div></div>
 </div>
 
 <div class="ba" id="ba" hidden>
   <span><b id="baN"></b> <span id="baLbl">pedidos</span></span>
   <span style="opacity:.6;font-weight:600;font-size:12.5px" id="baRes"></span>
   <button class="btn" id="baLimpar" style="padding:7px 10px">limpar</button>
+  <button class="btn" id="baImprimir" style="padding:9px 14px" hidden>Ordenar e imprimir</button>
+  <button class="btn pri" id="baCorte" style="padding:9px 14px" hidden>Dar início ao corte</button>
+  <button class="btn roxa" id="baAlt" style="padding:9px 14px">Lançar alteração</button>
   <button class="btn verde" id="baCarga" style="padding:9px 14px">Definir carga</button>
 </div>
 
@@ -280,7 +371,94 @@ const TIPOS = {cancel:'Cancelamento',prio:'Prioridade',repro:'Reprogramação',
 
 let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
-let edicao = false;
+let edicao = false, painel = false, verMortas = false, DATA = null;
+let ordem = [], recusas = [], lotes = [];
+const F = {};
+const LIM_CORTE = 20;
+
+const ETAPAS = {
+  1:[{k:'corte_inicio',n:'Corte<br>início',viva:true},
+     {k:'corte_fim',n:'Corte<br>fim',viva:true},
+     {k:'viracao_inicio',n:'Viração<br>início',viva:false},
+     {k:'viracao_fim',n:'Viração<br>fim',viva:false},
+     {k:'montagem_inicio',n:'Montagem<br>início',viva:false},
+     {k:'montagem_fim',n:'Montagem<br>fim',viva:false},
+     {k:'solda_inicio',n:'Solda<br>início',viva:false},
+     {k:'solda_fim',n:'Solda<br>fim',viva:false},
+     {k:'acab_inicio',n:'Acab.<br>início',viva:false}]
+};
+const etapasDe = s => (ETAPAS[s] || []).filter(e => verMortas || e.viva);
+const nomeEtapa = k => (ETAPAS[1].find(e => e.k === k) || {n:k}).n.replace('<br>', ' ');
+
+const menos1 = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0,10); };
+
+const PECAS_PADRAO = ['encosto','assento','estrutura','aro','regulagem','caninhos','tubinhos','base'];
+function pecasDe(it, s){
+  const fam = (it.item || '').trim().toUpperCase().split(' ')[0];
+  const doHist = [...new Set(dados
+    .filter(x => (x.item || '').trim().toUpperCase().split(' ')[0] === fam)
+    .flatMap(x => x.baixas.filter(b => b.setor_id === s && b.peca).map(b => b.peca)))];
+  const minhas = it.baixas.filter(b => b.setor_id === s && b.peca).map(b => b.peca);
+  return [...new Set([...minhas, ...doHist, ...PECAS_PADRAO])].slice(0, 8);
+}
+function porPeca(it, s){
+  const m = {};
+  it.baixas.filter(b => b.setor_id === s && b.peca).forEach(b => m[b.peca] = (m[b.peca] || 0) + b.qtd);
+  return m;
+}
+const etapaDe = (it, s, k) => it.etapas.find(e => e.setor_id === s && e.etapa === k);
+function paradoNoCorte(it, s){
+  if(s !== 1) return 0;
+  const ci = etapaDe(it, s, 'corte_inicio'), cf = etapaDe(it, s, 'corte_fim');
+  if(!ci || cf || !passa(it, s) || estado(it, s) === 'ok') return 0;
+  const d = Math.round((new Date(hoje()+'T00:00:00') - new Date(ci.data+'T00:00:00'))/864e5);
+  return d > LIM_CORTE ? d : 0;
+}
+const recusaDe = (it, s) => recusas.find(r => r.item_id === it.id && r.setor_id === s && r.estado === 'pendente');
+function historicoRoteiro(it, s){
+  let p = 0, n = 0;
+  dados.forEach(x => {
+    if((x.item || '').toUpperCase() !== (it.item || '').toUpperCase()) return;
+    if((x.composicao || '').toUpperCase() !== (it.composicao || '').toUpperCase()) return;
+    passa(x, s) ? p++ : n++;
+  });
+  return {p, n};
+}
+
+/* ---- ordenação em camadas ---- */
+function valorCol(it, c, s){
+  if(c === 'qtd') return String(it.qtd).padStart(6,'0');
+  if(c === 'pronto') return String(pronto(it)).padStart(3,'0');
+  if(c === 'carga') return (it.data_carga || 'zzzz') + (it.carga || '');
+  if(c === 'alteracao'){ const a = altsDe(it); return a.length ? '1' + a[0].tipo : '2'; }
+  if(c === 'entrega'){ const e = estado(it, s); return {ok:'1',pa:'2',pe:'3',sk:'4'}[e] + (dataFim(it, s) || ''); }
+  if(c.startsWith('et:')){ const e = etapaDe(it, s, c.slice(3)); return e ? '1' + e.data : '2'; }
+  return (it[c] || '').toString().toUpperCase();
+}
+function ordenarLista(l, s){
+  if(!ordem.length) return [...l].sort((a, b) =>
+    (paradoNoCorte(b, s) - paradoNoCorte(a, s)) || a.pedido.localeCompare(b.pedido) || a.item.localeCompare(b.item));
+  return [...l].sort((a, b) => {
+    for(const o of ordem){
+      const x = valorCol(a, o.col, s), y = valorCol(b, o.col, s);
+      if(x !== y) return (x < y ? -1 : 1) * (o.dir === 'desc' ? -1 : 1);
+    }
+    return 0;
+  });
+}
+function clicarCol(c){
+  const i = ordem.findIndex(o => o.col === c);
+  if(i === 0) ordem[0].dir = ordem[0].dir === 'asc' ? 'desc' : 'asc';
+  else if(i > 0) ordem.unshift(ordem.splice(i, 1)[0]);
+  else ordem.unshift({col:c, dir:'asc'});
+  if(ordem.length > 4) ordem.pop();
+  pintar();
+}
+const marca = c => {
+  const i = ordem.findIndex(o => o.col === c);
+  return i < 0 ? '' : `<span class="ordm">${ordem[i].dir === 'asc' ? '▲' : '▼'}${ordem.length > 1 ? i + 1 : ''}</span>`;
+};
 const setorDaTela = () => perfil.papel === 'setor' ? perfil.setor_id : 1;
 function podeEscrever(){
   if(!perfil) return false;
@@ -357,7 +535,8 @@ async function iniciar(){
     await sb.auth.signOut(); return;
   }
   perfil = p;
-  edicao = false; sel.clear(); filtro = null; busca = '';
+  edicao = false; sel.clear(); filtro = null; busca = ''; ordem = []; DATA = hoje();
+  Object.keys(F).forEach(k => F[k] = '');
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
   document.getElementById('quem').innerHTML =
@@ -372,17 +551,19 @@ async function iniciar(){
 
 /* ---------------- CARGA DE DADOS ---------------- */
 async function carregar(){
-  document.getElementById('wrap').innerHTML = '<div class="vazio">Carregando…</div>';
-  const [itens, rot, bx, fec, alt, etp] = await Promise.all([
+  document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
+  const [itens, rot, bx, fec, alt, etp, rec] = await Promise.all([
     sb.from('itens').select('*').order('pedido'),
     sb.from('roteiro').select('*'),
     sb.from('baixas').select('*'),
     sb.from('fechamentos').select('*'),
     sb.from('alteracoes').select('*'),
-    sb.from('etapas').select('*')
+    sb.from('etapas').select('*'),
+    sb.from('recusas').select('*')
   ]);
-  for(const r of [itens, rot, bx, fec, alt, etp]) if(r.error) return erro(r.error);
+  for(const r of [itens, rot, bx, fec, alt, etp, rec]) if(r.error) return erro(r.error);
   alteracoes = alt.data || [];
+  recusas = rec.data || [];
   const porItem = {};
   (rot.data || []).forEach(r => ((porItem[r.item_id] = porItem[r.item_id] || {}).rot = porItem[r.item_id].rot || {}, porItem[r.item_id].rot[r.setor_id] = r.passa));
   dados = (itens.data || []).map(i => {
@@ -403,6 +584,11 @@ document.getElementById('btEditar').onclick = () => {
   pintar();
   toast(edicao ? 'Edição liberada' : 'De volta ao modo leitura');
 };
+document.querySelectorAll('#dataseg button[data-dd]').forEach(b =>
+  b.onclick = () => { DATA = menos1(hoje(), Number(b.dataset.dd)); pintar(); });
+document.getElementById('dtOutra').onchange = e => { if(e.target.value){ DATA = e.target.value; pintar(); } };
+document.getElementById('voltarHoje').onclick = () => { DATA = hoje(); pintar(); };
+document.getElementById('btPainel').onclick = () => { painel = !painel; pintar(); };
 document.getElementById('btRecarregar').onclick = carregar;
 document.getElementById('btTema').onclick = () => {
   const h = document.documentElement;
@@ -431,6 +617,15 @@ function pronto(it){
   for(let s = 0; s < 10; s++){ if(!passa(it, s)) continue; t++; if(estado(it, s) === 'ok') f++; }
   return t ? Math.round(f / t * 100) : 100;
 }
+function corpoAlt(as){
+  if(!as.length) return '<span style="opacity:.4">—</span>';
+  return as.map(a => `<div style="margin-bottom:4px">
+    <span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
+    <div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>
+    <div style="font-size:10px;opacity:.55;font-family:'JetBrains Mono',monospace;margin-top:2px">
+      ${a.itens ? 'só este item · ' : ''}${fmt(a.data)} · ${esc(a.por)}${a.setores && a.setores.length < 10 ? ' · ' + a.setores.length + ' setores' : ''}</div>
+  </div>`).join('');
+}
 const altsDe = it => alteracoes.filter(a => a.pedido === it.pedido && (!a.itens || a.itens.includes(it.id)));
 function filtrar(){
   let l = dados;
@@ -439,19 +634,54 @@ function filtrar(){
     l = l.filter(i => passa(i, s));
     if(filtro === 'pend') l = l.filter(i => ['pe','pa'].includes(estado(i, s)));
     if(filtro === 'ok') l = l.filter(i => estado(i, s) === 'ok');
+    if(filtro === 'fila') l = l.filter(i => i.data_carga &&
+      !i.etapas.some(e => e.setor_id === s && e.etapa === 'corte_inicio') && estado(i, s) !== 'ok');
   } else {
     if(filtro === 'sem') l = l.filter(i => !i.data_carga);
     if(filtro === 'ok') l = l.filter(i => i.data_carga);
+    if(filtro === 'alt') l = l.filter(i => altsDe(i).length);
+    if(filtro === 'rec') l = l.filter(i => recusas.some(r => r.item_id === i.id && r.estado === 'pendente'));
   }
+  if(F.cliente) l = l.filter(i => (i.cliente || '') === F.cliente);
+  if(F.classe) l = l.filter(i => (i.classificacao || '') === F.classe);
+  if(F.familia) l = l.filter(i => (i.familia || '') === F.familia);
+  if(F.pedido) l = l.filter(i => i.pedido === F.pedido);
+  if(F.cargaF) l = l.filter(i => (i.carga || '') === F.cargaF);
+  if(F.tipo) l = l.filter(i => altsDe(i).some(a => a.tipo === F.tipo));
   if(busca){
     const t = busca.toLowerCase().split(/\s+/).filter(Boolean);
     l = l.filter(i => t.every(w => [i.pedido, i.item, i.composicao, i.cliente, i.carga,
-      i.classificacao, i.observacao].join(' ').toLowerCase().includes(w)));
+      i.classificacao, i.observacao, ...altsDe(i).map(a => a.texto)].join(' ').toLowerCase().includes(w)));
   }
   return l;
 }
 
 /* ---------------- PINTAR ---------------- */
+function feed(){
+  const el = document.getElementById('feed');
+  if(!el) return;
+  const ord = [...alteracoes].sort((a, b) => (b.data || '').localeCompare(a.data || '') || b.id - a.id);
+  el.innerHTML = ord.length ? ord.map(a => `<div class="fd">
+    <div class="fd-top"><span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
+      <span class="fd-ped">${esc(a.pedido)}</span>
+      ${editando() && tela === 'pcp' ? `<button class="fd-ed" data-eda="${a.id}">editar</button>
+        <button class="hx" data-rma="${a.id}">remover</button>` : ''}</div>
+    <div class="fd-txt">${esc(a.texto)}</div>
+    <div class="fd-meta">${a.itens ? a.itens.length + ' item(ns) · ' : 'pedido inteiro · '}${
+      a.setores && a.setores.length < 10 ? a.setores.map(i => SET[i]).join(' ') : 'todos os setores'}</div>
+    <div class="fd-meta">${fmt(a.data)} · ${esc(a.por)}${a.editado_por ? ' · editada por ' + esc(a.editado_por) : ''}</div>
+  </div>`).join('') : '<span class="vazio" style="padding:20px 0;display:block">Nenhuma alteração ativa.</span>';
+  el.querySelectorAll('[data-rma]').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('alteracoes').delete().eq('id', b.dataset.rma);
+    if(error) return erro(error);
+    toast('Alteração removida'); await carregar();
+  });
+  el.querySelectorAll('[data-eda]').forEach(b => b.onclick = () => {
+    const a = alteracoes.find(x => x.id === Number(b.dataset.eda));
+    sel = new Set([a.pedido]); modalAlt(null, a);
+  });
+}
+
 function pintar(){
   const be = document.getElementById('btEditar');
   be.hidden = !podeEscrever();
@@ -468,20 +698,50 @@ function pintar(){
           ? 'Modo edição — você pode criar pedidos e definir carga.'
           : 'Modo edição — você pode registrar etapas e baixas.')
       : 'Somente leitura. Clique em Editar para liberar as ações.';
+  document.getElementById('btPainel').hidden = tela !== 'pcp';
+  document.getElementById('btPainel').classList.toggle('on', painel);
+  document.getElementById('lateral').hidden = !(painel && tela === 'pcp');
+  document.getElementById('main2').classList.toggle('compainel', painel && tela === 'pcp');
+  const ds = document.getElementById('dataseg');
+  ds.hidden = !(tela === 'setor' && editando());
+  if(!DATA) DATA = hoje();
+  ds.classList.toggle('alt', DATA !== hoje());
+  ds.querySelectorAll('button[data-dd]').forEach(b => {
+    const dd = menos1(hoje(), Number(b.dataset.dd));
+    b.classList.toggle('on', DATA === dd);
+    b.querySelector('i').textContent = fmt(dd).slice(0,5);
+  });
+  const avd = document.getElementById('avisoData');
+  avd.hidden = !(DATA !== hoje() && tela === 'setor' && editando());
+  document.getElementById('avisoDataTxt').textContent = fmt(DATA);
   document.querySelectorAll('.aba').forEach(a => a.classList.toggle('on', a.dataset.t === tela));
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
     ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[perfil.papel === 'setor' ? perfil.setor_id : 1]}</em>`;
   tela === 'pcp' ? telaPCP() : telaSetor();
+  feed();
 }
 
-function barraFiltro(chips){
+function barraFiltro(chips, selects){
+  const ativos = busca || Object.values(F).some(Boolean) || ordem.length;
   return `<div class="linha">
     <span class="cont" id="cont"></span>
     <div class="busca"><input id="q" placeholder="Buscar pedido, item, composição, cliente…" value="${esc(busca)}"></div>
-    ${chips}
-  </div>`;
+    ${(selects || []).map(s => `<select class="fsel ${F[s.k] ? 'on' : ''}" data-fk="${s.k}">
+      <option value="">${s.lbl}</option>
+      ${[...new Set(dados.map(s.get))].filter(Boolean).sort()
+        .map(v => `<option value="${esc(v)}"${F[s.k] === v ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+    </select>`).join('')}
+    ${ativos ? '<button class="flimpar" id="fLimpar">Limpar</button>' : ''}
+  </div>
+  <div class="linha">${chips}</div>`;
 }
 function ligarFiltro(){
+  document.querySelectorAll('[data-fk]').forEach(s => s.onchange = () => {
+    F[s.dataset.fk] = s.value; pintar();
+  });
+  const fl = document.getElementById('fLimpar');
+  if(fl) fl.onclick = () => { busca = ''; Object.keys(F).forEach(k => F[k] = ''); ordem = []; pintar(); };
+  document.querySelectorAll('th[data-col]').forEach(t => t.onclick = () => clicarCol(t.dataset.col));
   const q = document.getElementById('q');
   if(q){
     q.oninput = e => { clearTimeout(q._t); const v = e.target.value;
@@ -495,22 +755,29 @@ function ligarFiltro(){
 /* ---------- RQ 213 (PCP) ---------- */
 function telaPCP(){
   const podeEditar = editando();
-  const lista = filtrar();
+  const lista = ordenarLista(filtrar(), 1);
   const nSem = dados.filter(i => !i.data_carga).length;
-  document.getElementById('wrap').innerHTML =
+  const nRec = recusas.filter(r => r.estado === 'pendente').length;
+  document.getElementById('conteudo').innerHTML =
     (podeEditar ? `<div class="linha"><button class="btn pri" id="btNovo">+ Novo pedido</button>
       <span class="dica" style="margin:0">O roteiro é aplicado sozinho a partir das regras já aprendidas.</span></div>` : '') +
-    barraFiltro(`<button class="chip sem ${filtro === 'sem' ? 'on' : ''}" data-f="sem"><span class="d"></span>Sem carga ${nSem}</button>
-      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Com carga ${dados.length - nSem}</button>`) +
+    barraFiltro(`
+      <button class="chip sem ${filtro === 'sem' ? 'on' : ''}" data-f="sem"><span class="d"></span>Sem carga ${nSem}</button>
+      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Com carga ${dados.length - nSem}</button>
+      <button class="chip fila ${filtro === 'alt' ? 'on' : ''}" data-f="alt"><span class="d"></span>Com alteração ${dados.filter(i => altsDe(i).length).length}</button>
+      ${nRec ? `<button class="chip rec ${filtro === 'rec' ? 'on' : ''}" data-f="rec"><span class="d"></span>Recusas de roteiro ${nRec}</button>` : ''}`,
+      [{k:'cliente', lbl:'Todos os clientes', get:i => i.cliente},
+       {k:'classe', lbl:'Todas as classificações', get:i => i.classificacao},
+       {k:'familia', lbl:'Todas as famílias', get:i => i.familia}]) +
     `<div class="tw"><div class="ts"><table>
       <thead><tr>
         ${podeEditar ? '<th class="sc"><input type="checkbox" id="selTodos"></th>' : ''}
         ${SET.map(s => `<th class="c">${s}</th>`).join('')}
-        <th class="c">Pronto</th>
-        <th>Data kanban</th><th>Pedido</th><th>Classificação</th>
-        <th class="crg">Data de carga</th><th class="crg">Carga</th>
-        <th>Qtd</th><th>Alteração</th><th>Item</th><th>Composição</th>
-        <th>Observação</th><th>Cliente</th>
+        <th class="c" data-col="pronto">Pronto${marca('pronto')}</th>
+        <th data-col="data_kanban">Data kanban${marca('data_kanban')}</th><th data-col="pedido">Pedido${marca('pedido')}</th><th data-col="classificacao">Classificação${marca('classificacao')}</th>
+        <th class="crg" data-col="carga">Data de carga${marca('carga')}</th><th class="crg">Carga</th>
+        <th data-col="qtd">Qtd${marca('qtd')}</th><th data-col="alteracao">Alteração${marca('alteracao')}</th><th data-col="item">Item${marca('item')}</th><th data-col="composicao">Composição${marca('composicao')}</th>
+        <th data-col="observacao">Observação${marca('observacao')}</th><th data-col="cliente">Cliente${marca('cliente')}</th>
       </tr></thead><tbody>
       ${lista.map(it => {
         const p = pronto(it), d = dias(it.data_carga), as = altsDe(it);
@@ -518,6 +785,10 @@ function telaPCP(){
         return `<tr class="${sel.has(it.pedido) ? 'sel' : ''}">
           ${podeEditar ? `<td class="sc"><input type="checkbox" class="ck" data-p="${esc(it.pedido)}" ${sel.has(it.pedido) ? 'checked' : ''}></td>` : ''}
           ${SET.map((_, s) => {
+            const r = recusaDe(it, s);
+            if(r && podeEditar) return `<td class="c"><button class="pill p-rec" data-rec="${r.id}"
+              title="${esc(r.por)}: ${esc(r.motivo)}"><span class="ic">!</span><span class="dd">recusa</span></button></td>`;
+            if(r) return '<td class="c"><span class="pill p-rec"><span class="ic">!</span><span class="dd">recusa</span></span></td>';
             const e = estado(it, s);
             const inner = e === 'ok' ? `<span class="dd">${fmtC(dataFim(it, s))}</span>`
               : e === 'sk' ? '<span class="ic">×</span>'
@@ -525,14 +796,17 @@ function telaPCP(){
               : '<span class="ic">—</span>';
             return `<td class="c"><span class="pill p-${e}">${inner}</span></td>`;
           }).join('')}
-          <td class="c"><b class="mono" style="color:${cor}!important">${p}%</b></td>
+          <td class="c"><div class="pct"><b class="mono">${p}%</b>
+            <span class="bar"><i style="width:${p}%;background:${cor}"></i></span></div></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
           <td class="ped">${esc(it.pedido)}</td>
           <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px;${d !== null && d < 0 ? 'font-weight:700' : ''}">${fmt(it.data_carga)}</td>
           <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">a definir</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
-          <td>${as.map(a => `<span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span><div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>`).join('') || '<span style="opacity:.4">—</span>'}</td>
+          <td>${podeEditar
+            ? `<button class="celbt" data-alt="${it.pedido}" data-item="${it.id}">${corpoAlt(as)}</button>`
+            : corpoAlt(as)}</td>
           <td><div class="it">${esc(it.item)}</div></td>
           <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
           <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
@@ -556,7 +830,15 @@ function telaPCP(){
     st.checked = peds.length && peds.every(p => sel.has(p));
     st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); pintar(); };
   }
+  document.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => modalRecusa(Number(b.dataset.rec)));
+  document.querySelectorAll('[data-alt]').forEach(b => b.onclick = () => {
+    sel = new Set([b.dataset.alt]); modalAlt(b.dataset.item);
+  });
   const ba = document.getElementById('ba');
+  document.getElementById('baCorte').hidden = true;
+  document.getElementById('baImprimir').hidden = true;
+  document.getElementById('baCarga').hidden = false;
+  document.getElementById('baAlt').hidden = false;
   ba.hidden = !(podeEditar && sel.size);
   if(sel.size){
     const its = dados.filter(i => sel.has(i.pedido));
@@ -568,60 +850,160 @@ function telaPCP(){
 
 /* ---------- RQ 200 (setor) ---------- */
 function telaSetor(){
-  const s = perfil.papel === 'setor' ? perfil.setor_id : 1;
+  const s = setorDaTela();
   const podeBaixar = editando();
-  const lista = filtrar();
+  const lista0 = filtrar();
   const pend = dados.filter(i => passa(i, s) && ['pe','pa'].includes(estado(i, s))).length;
-  document.getElementById('wrap').innerHTML =
-    barraFiltro(`<button class="chip pend ${filtro === 'pend' ? 'on' : ''}" data-f="pend"><span class="d"></span>Pendentes ${pend}</button>
-      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Concluídos ${dados.filter(i => passa(i, s) && estado(i, s) === 'ok').length}</button>`) +
+  const naFila = i => passa(i, s) && i.data_carga && !etapaDe(i, s, 'corte_inicio') && estado(i, s) !== 'ok';
+  const nFila = dados.filter(naFila).length;
+  const nParado = dados.filter(i => paradoNoCorte(i, s)).length;
+  const modoFila = filtro === 'fila' && podeBaixar;
+  const ets = etapasDe(s);
+  const lista = ordenarLista(lista0, s);
+
+  document.getElementById('conteudo').innerHTML =
+    barraFiltro(`
+      <button class="chip pend ${filtro === 'pend' ? 'on' : ''}" data-f="pend"><span class="d"></span>Pendentes ${pend}</button>
+      <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Concluídos ${dados.filter(i => passa(i, s) && estado(i, s) === 'ok').length}</button>
+      ${nFila ? `<button class="chip fila ${filtro === 'fila' ? 'on' : ''}" data-f="fila"><span class="d"></span>Fila do corte ${nFila}</button>` : ''}
+      ${nParado ? `<button class="chip parado ${filtro === 'parado' ? 'on' : ''}" data-f="parado"><span class="d"></span>Parado no corte ${nParado}</button>` : ''}
+      ${ETAPAS[s] ? `<button class="chip morta ${verMortas ? 'on' : ''}" id="btMortas">Mostrar etapas não usadas</button>` : ''}`,
+      [{k:'pedido', lbl:'Todos os pedidos', get:i => i.pedido},
+       {k:'cargaF', lbl:'Todas as cargas', get:i => i.carga},
+       {k:'classe', lbl:'Todas as classificações', get:i => i.classificacao}]) +
     `<div class="tw"><div class="ts"><table>
       <thead><tr>
-        <th class="c">Corte<br>início</th><th class="c">Corte<br>fim</th><th class="c">Entrega</th>
-        <th>Data kanban</th><th>Pedido</th><th>Classificação</th>
-        <th class="crg">Data de carga</th><th class="crg">Carga</th>
-        <th>Qtd</th><th>Alteração</th><th>Item</th><th>Composição</th><th>Observação</th>
+        ${modoFila ? '<th class="sc"><input type="checkbox" id="selTodosF"></th>' : ''}
+        ${ets.map(e => `<th class="c" data-col="et:${e.k}">${e.n}${marca('et:' + e.k)}</th>`).join('')}
+        <th class="c" data-col="entrega">Entrega${marca('entrega')}</th>
+        <th class="c">Entrega<br>parcial</th>
+        <th data-col="data_kanban">Data kanban${marca('data_kanban')}</th>
+        <th data-col="pedido">Pedido${marca('pedido')}</th>
+        <th data-col="classificacao">Classificação${marca('classificacao')}</th>
+        <th class="crg" data-col="carga">Data de carga${marca('carga')}</th>
+        <th class="crg" data-col="carga">Carga</th>
+        <th data-col="qtd">Qtd${marca('qtd')}</th>
+        <th data-col="alteracao">Alteração${marca('alteracao')}</th>
+        <th data-col="item">Item${marca('item')}</th>
+        <th data-col="composicao">Composição${marca('composicao')}</th>
+        <th data-col="observacao">Observação${marca('observacao')}</th>
       </tr></thead><tbody>
       ${lista.map(it => {
         const e = estado(it, s), d = dias(it.data_carga), as = altsDe(it);
-        const ci = it.etapas.find(x => x.setor_id === s && x.etapa === 'corte_inicio');
-        const cf = it.etapas.find(x => x.setor_id === s && x.etapa === 'corte_fim');
-        const cel = (et, obj) => {
-          const inner = obj ? `<span class="dd">${fmtC(obj.data)}</span>` : '<span class="ic">—</span>';
-          const cls = obj ? 'p-ok' : 'p-pe';
-          return podeBaixar
-            ? `<td class="c"><button class="pill ${cls}" data-et="${et}" data-id="${it.id}">${inner}</button></td>`
-            : `<td class="c"><span class="pill ${cls}">${inner}</span></td>`;
+        const par = paradoNoCorte(it, s), pp = porPeca(it, s);
+        const celEt = et => {
+          const ob = etapaDe(it, s, et.k);
+          if(et.k === 'corte_fim' && par) return `<td class="c">${podeBaixar
+            ? `<button class="pill p-parado" data-et="${et.k}" data-id="${it.id}"
+                 title="Liberado há ${par} dias e ainda sem corte fim"><span class="ic">${par}</span><span class="dd">dias</span></button>`
+            : `<span class="pill p-parado"><span class="ic">${par}</span><span class="dd">dias</span></span>`}</td>`;
+          const inner = ob ? `<span class="dd">${fmtC(ob.data)}</span>` : '<span class="ic">—</span>';
+          const cls = ob ? 'p-ok' : 'p-pe';
+          return `<td class="c">${podeBaixar
+            ? `<button class="pill ${cls}" data-et="${et.k}" data-id="${it.id}">${inner}</button>`
+            : `<span class="pill ${cls}">${inner}</span>`}</td>`;
         };
+        const nomes = Object.keys(pp);
         const ent = e === 'ok' ? `<span class="dd">${fmtC(dataFim(it, s))}</span>`
-          : e === 'pa' ? `<span class="ic">${baixado(it, s)}/${it.qtd}</span>`
+          : e === 'sk' ? '<span class="ic">×</span>'
+          : e === 'pa' ? (nomes.length
+              ? `<span class="ic">${nomes.length}</span><span class="dd">${nomes.map(n => n.slice(0,3)).join(' ')}</span>`
+              : `<span class="ic">${baixado(it, s)}/${it.qtd}</span>`)
           : '<span class="ic">—</span>';
-        return `<tr>
-          ${cel('corte_inicio', ci)}${cel('corte_fim', cf)}
+        const parc = nomes.length
+          ? `<span class="dd">${nomes.map(n => n.slice(0,3) + ' ' + pp[n]).join('<br>')}</span>`
+          : '<span class="ic">—</span>';
+        return `<tr class="${sel.has(it.id) ? 'sel' : ''}">
+          ${modoFila ? `<td class="sc"><input type="checkbox" class="ckf" data-id="${it.id}" ${sel.has(it.id) ? 'checked' : ''}></td>` : ''}
+          ${ets.map(celEt).join('')}
           <td class="c">${podeBaixar
             ? `<button class="pill p-${e}" data-baixa="${it.id}">${ent}</button>`
             : `<span class="pill p-${e}">${ent}</span>`}</td>
+          <td class="c"><span class="pill ${nomes.length ? (e === 'ok' ? 'p-ok' : 'p-pa') : ''}">${parc}</span></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
           <td class="ped">${esc(it.pedido)}</td>
           <td style="font-size:11.5px;opacity:.7">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px">${fmt(it.data_carga)}${d !== null && d < 0 ? ' ⚠' : ''}</td>
           <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="opacity:.55">—</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
-          <td>${as.map(a => `<span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span><div style="font-size:11.5px;margin-top:3px">${esc(a.texto)}</div>`).join('') || '<span style="opacity:.4">—</span>'}</td>
+          <td>${corpoAlt(as)}</td>
           <td><div class="it">${esc(it.item)}</div></td>
           <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
           <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
-    (lista.length ? '' : `<div class="vazio">Nada no ${SETN[s].toLowerCase()} ainda.<br>Os itens aparecem aqui assim que o PCP lançar pedidos cujo roteiro passe por este setor.</div>`);
+    (lista.length ? '' : `<div class="vazio">Nada no ${SETN[s].toLowerCase()} com esse recorte.</div>`);
 
   document.getElementById('cont').innerHTML =
-    `<b>${lista.length}</b> itens no ${SETN[s].toLowerCase()} · <b>${pend}</b> pendentes`;
+    `<b>${lista.length}</b> de ${dados.filter(i => passa(i, s)).length} itens · <b>${pend}</b> pendentes`;
   ligarFiltro();
-  document.getElementById('ba').hidden = true;
-  document.querySelectorAll('[data-et]').forEach(b => b.onclick = () => modalEtapa(b.dataset.id, b.dataset.et));
-  document.querySelectorAll('[data-baixa]').forEach(b => b.onclick = () => modalBaixa(b.dataset.baixa));
+  const bm = document.getElementById('btMortas');
+  if(bm) bm.onclick = () => { verMortas = !verMortas; pintar(); };
+
+  document.querySelectorAll('.ckf').forEach(c => c.onchange = () => {
+    c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id); pintar();
+  });
+  const stf = document.getElementById('selTodosF');
+  if(stf){
+    const ids = lista.map(i => i.id);
+    stf.checked = ids.length && ids.every(i => sel.has(i));
+    stf.onchange = () => { ids.forEach(i => stf.checked ? sel.add(i) : sel.delete(i)); pintar(); };
+  }
+  if(!modoFila) sel.clear();
+
+  const baS = document.getElementById('ba');
+  baS.hidden = !(modoFila && sel.size);
+  document.getElementById('baCarga').hidden = true;
+  document.getElementById('baAlt').hidden = true;
+  document.getElementById('baCorte').hidden = false;
+  document.getElementById('baImprimir').hidden = false;
+  if(sel.size){
+    const its = dados.filter(i => sel.has(i.id));
+    const venc = its.filter(i => dias(i.data_carga) < 0).length;
+    document.getElementById('baN').textContent = sel.size;
+    document.getElementById('baLbl').textContent = sel.size > 1 ? 'itens' : 'item';
+    document.getElementById('baRes').textContent =
+      `${new Set(its.map(i => i.pedido)).size} pedidos · ${its.reduce((a, i) => a + i.qtd, 0)} un${venc ? ` · ${venc} com carga vencida` : ''}`;
+  }
+
+  // clique rápido / botão direito / toque longo
+  document.querySelectorAll('[data-et]').forEach(b => {
+    const id = b.dataset.id, k = b.dataset.et;
+    b.onclick = () => rapidoEtapa(id, k);
+    b.oncontextmenu = ev => { ev.preventDefault(); modalEtapa(id, k); };
+    let t = null;
+    b.onpointerdown = ev => { if(ev.pointerType === 'touch') t = setTimeout(() => { t = 'go'; modalEtapa(id, k); }, 480); };
+    b.onpointerup = b.onpointercancel = () => { if(t && t !== 'go') clearTimeout(t); };
+  });
+  document.querySelectorAll('[data-baixa]').forEach(b => {
+    const id = b.dataset.baixa;
+    b.onclick = () => rapidoBaixa(id);
+    b.oncontextmenu = ev => { ev.preventDefault(); modalBaixa(id); };
+    let t = null;
+    b.onpointerdown = ev => { if(ev.pointerType === 'touch') t = setTimeout(() => { t = 'go'; modalBaixa(id); }, 480); };
+    b.onpointerup = b.onpointercancel = () => { if(t && t !== 'go') clearTimeout(t); };
+  });
+}
+
+async function rapidoEtapa(id, k){
+  const s = setorDaTela(), it = dados.find(x => x.id === id);
+  if(etapaDe(it, s, k) || paradoNoCorte(it, s)) return modalEtapa(id, k);
+  const { error } = await sb.from('etapas').upsert({item_id:id, setor_id:s, etapa:k,
+    data:DATA, por:perfil.nome}, {onConflict:'item_id,setor_id,etapa'});
+  if(error) return erro(error);
+  toast(`${nomeEtapa(k)} · ${fmt(DATA)} · ${it.item}`);
+  await carregar();
+}
+async function rapidoBaixa(id){
+  const s = setorDaTela(), it = dados.find(x => x.id === id);
+  if(!passa(it, s) || estado(it, s) === 'ok' || it.baixas.some(b => b.setor_id === s)) return modalBaixa(id);
+  const falta = it.qtd - completo(it, s);
+  const { error } = await sb.from('baixas').insert({item_id:id, setor_id:s, data:DATA,
+    qtd:falta, por:perfil.nome, por_id:perfil.id});
+  if(error) return erro(error);
+  toast(`${falta} un · ${fmt(DATA)} · ${it.item}`);
+  await carregar();
 }
 
 /* ---------------- MODAIS ---------------- */
@@ -693,11 +1075,21 @@ async function salvarNovo(){
 
 /* ---------- carga ---------- */
 document.getElementById('baLimpar').onclick = () => { sel.clear(); pintar(); };
-document.getElementById('baCarga').onclick = () => {
+document.getElementById('baCarga').onclick = () => modalCarga();
+function modalCarga(){
   const its = dados.filter(i => sel.has(i.pedido));
   const cargas = [...new Map(dados.filter(i => i.carga && i.data_carga)
     .map(i => [i.carga + '|' + i.data_carga, {c:i.carga, d:i.data_carga}])).values()];
-  abrirM('Carga', 'Definir carga', `${sel.size} pedido(s) · ${its.length} itens`, `
+  const atuais = [...new Set(its.filter(i => i.data_carga).map(i => i.carga + '|' + i.data_carga))];
+  abrirM('Carga', atuais.length ? 'Mover para outra carga' : 'Definir carga',
+    `${sel.size} pedido(s) · ${its.length} itens`, `
+    ${atuais.length ? `<section class="bl"><h5>Carga atual</h5>
+      ${atuais.map(k => { const [c, dt] = k.split('|');
+        return `<div class="atual"><span style="font-weight:800">${esc(c)}</span>
+          <span class="mono" style="font-size:12.5px">${fmt(dt)}</span>
+          <button data-edcarga="${esc(k)}">editar esta carga</button></div>`; }).join('')}
+      <span class="dica">Escolha outra abaixo para mover, ou “editar esta carga” para corrigir a carga inteira.</span>
+    </section>` : ''}
     ${cargas.length ? `<section class="bl"><h5>Cargas já criadas</h5>
       <div class="chips2">${cargas.map(c => `<button type="button" class="c2" data-c="${esc(c.c)}" data-d="${c.d}">${esc(c.c)} · ${fmt(c.d)}</button>`).join('')}</div>
     </section>` : ''}
@@ -712,6 +1104,31 @@ document.getElementById('baCarga').onclick = () => {
       <button class="btn verde" id="cSalvar">Definir carga</button>
       <button class="btn" id="cTirar">Tirar da carga</button>
     </div>`);
+  document.querySelectorAll('[data-edcarga]').forEach(b => b.onclick = () => {
+    const [c, dt] = b.dataset.edcarga.split('|');
+    const alvos = dados.filter(i => i.carga === c && i.data_carga === dt);
+    const m = c.match(/^(\S+)\s+(.*)$/);
+    abrirM('Carga', 'Corrigir a carga',
+      `${c} · ${new Set(alvos.map(i => i.pedido)).size} pedidos · ${alvos.length} itens`, `
+      <section class="bl"><div class="g2">
+        <input id="e_num" value="${esc(m ? m[1] : c)}">
+        <input id="e_data2" type="date" value="${dt}">
+        <input id="e_dest" class="full" value="${esc(m ? m[2] : '')}">
+      </div>
+      <div class="alerta">A correção vale para a carga inteira: ${alvos.length} itens.</div>
+      <div class="acoes"><button class="btn verde" id="eSalvarCarga">Salvar correção</button>
+        <button class="btn" id="eVoltar">Voltar</button></div></section>`);
+    document.getElementById('eVoltar').onclick = () => modalCarga();
+    document.getElementById('eSalvarCarga').onclick = async () => {
+      const nova = document.getElementById('e_num').value.trim() + ' ' +
+        document.getElementById('e_dest').value.trim().toUpperCase();
+      const nd = document.getElementById('e_data2').value;
+      const { error } = await sb.from('itens').update({carga:nova, data_carga:nd})
+        .in('id', alvos.map(i => i.id));
+      if(error) return erro(error);
+      fecharM(); sel.clear(); toast(`Carga corrigida — ${alvos.length} itens`); await carregar();
+    };
+  });
   document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
     document.getElementById('c_num').value = b.dataset.c.split(' ')[0];
     document.getElementById('c_dest').value = b.dataset.c.split(' ').slice(1).join(' ');
@@ -732,17 +1149,346 @@ document.getElementById('baCarga').onclick = () => {
     if(error) return erro(error);
     fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar();
   };
+}
+
+/* ---------- recusa de roteiro ---------- */
+function modalRecusa(id){
+  const r = recusas.find(x => x.id === id);
+  if(!r) return;
+  const it = dados.find(x => x.id === r.item_id);
+  const h2 = historicoRoteiro(it, r.setor_id);
+  const tot = h2.p + h2.n, pc = tot ? Math.round(h2.p / tot * 100) : 0;
+  const contraria = pc >= 65;
+  abrirM('Recusa de roteiro', it.item, `${it.pedido} · ${SETN[r.setor_id]} · ${it.composicao || 'sem composição'}`, `
+    <section class="bl"><h5>O que o setor disse</h5>
+      <div class="motivo">“${esc(r.motivo || 'não passa por aqui')}”
+        <span style="display:block;font-size:11px;opacity:.6;margin-top:5px;font-family:'JetBrains Mono',monospace">${esc(r.por)} · ${fmt(r.data)}</span></div>
+    </section>
+    <section class="bl"><h5>O que o histórico diz</h5>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="pv ${contraria ? 'forte' : ''}"><div class="k">Já passou</div><div class="v">${h2.p}×</div></div>
+        <div class="pv ${contraria ? '' : 'forte'}"><div class="k">Não passou</div><div class="v">${h2.n}×</div></div>
+        <div class="pv"><div class="k">Nesse setor</div><div class="v">${pc}%</div></div>
+      </div>
+      <span class="dica">${tot <= 1
+        ? 'Ainda não há histórico desse item com essa composição — esta é a primeira vez.'
+        : contraria
+        ? `Esse item com essa composição passou pelo ${SETN[r.setor_id].toLowerCase()} em ${h2.p} de ${tot} vezes. A recusa contraria o padrão — vale confirmar com o setor.`
+        : `O padrão já é não passar (${h2.n} de ${tot}). A recusa confirma a regra: o roteiro é que estava marcado errado.`}</span>
+    </section>
+    <section class="bl"><h5>Decisão</h5>
+      <div class="acoes">
+        <button class="btn verde" data-dec="aceita">Aceitar — não passa</button>
+        <button class="btn vermelha" data-dec="devolvida">Devolver ao setor</button>
+      </div>
+      <div class="acoes" style="margin-top:8px">
+        <button class="btn" data-dec="regra">Aceitar e corrigir a regra do roteiro</button>
+      </div>
+      <span class="dica">“Corrigir a regra” vale para todos os próximos pedidos deste item com esta composição.</span>
+    </section>`);
+  document.querySelectorAll('[data-dec]').forEach(b => b.onclick = () => decidirRecusa(r, b.dataset.dec));
+}
+async function decidirRecusa(r, acao){
+  const it = dados.find(x => x.id === r.item_id);
+  if(acao === 'devolvida'){
+    const a = await sb.from('roteiro').update({passa:true}).match({item_id:r.item_id, setor_id:r.setor_id});
+    if(a.error) return erro(a.error);
+  }
+  if(acao === 'regra'){
+    const g = await sb.from('roteiro_regra').upsert({
+      item:(it.item || '').trim().toUpperCase(),
+      composicao:(it.composicao || '').trim().toUpperCase(),
+      setor_id:r.setor_id, passa:false, por:perfil.id}, {onConflict:'item,composicao,setor_id'});
+    if(g.error) return erro(g.error);
+  }
+  const { error } = await sb.from('recusas').update({estado:acao,
+    decidido_por:perfil.nome, decidido_em:hoje()}).eq('id', r.id);
+  if(error) return erro(error);
+  fecharM();
+  toast(acao === 'devolvida' ? `Devolvido ao ${SETN[r.setor_id].toLowerCase()}`
+    : acao === 'regra' ? `Regra corrigida: ${it.item} não passa mais pelo ${SETN[r.setor_id].toLowerCase()}`
+    : 'Recusa aceita nesta linha');
+  await carregar();
+}
+
+/* ---------- lote do corte + impressão ---------- */
+document.getElementById('baCorte').onclick = async () => {
+  const s = setorDaTela();
+  const its = dados.filter(i => sel.has(i.id));
+  if(!its.length) return;
+  const { data:lote, error:e1 } = await sb.from('lotes')
+    .insert({setor_id:s, data:hoje(), por:perfil.nome}).select().single();
+  if(e1) return erro(e1);
+  const { error:e2 } = await sb.from('etapas').upsert(
+    its.map(i => ({item_id:i.id, setor_id:s, etapa:'corte_inicio', data:hoje(),
+      por:perfil.nome, lote_id:lote.id})), {onConflict:'item_id,setor_id,etapa'});
+  if(e2) return erro(e2);
+  sel.clear();
+  toast(`Lote ${fmt(hoje())} · ${its.length} itens liberados para o corte`);
+  await carregar();
 };
+
+document.getElementById('baImprimir').onclick = () => {
+  const its = dados.filter(i => sel.has(i.id));
+  if(!its.length) return;
+  let ordem = 'carga', ids = its.map(i => i.id);
+  const ORD = {carga:'data de carga', item:'item', pedido:'pedido', composicao:'composição', manual:'ordem manual'};
+  const ordenar = () => {
+    if(ordem === 'manual') return;
+    const g = id => dados.find(x => x.id === id);
+    ids.sort((a, b) => {
+      const x = g(a), y = g(b);
+      if(ordem === 'carga') return (x.data_carga || '9999').localeCompare(y.data_carga || '9999') || x.item.localeCompare(y.item);
+      if(ordem === 'item') return x.item.localeCompare(y.item);
+      if(ordem === 'pedido') return x.pedido.localeCompare(y.pedido) || x.item.localeCompare(y.item);
+      return (x.composicao || '').localeCompare(y.composicao || '');
+    });
+  };
+  const lista = () => {
+    document.getElementById('ordLista').innerHTML = ids.map((id, n) => {
+      const i = dados.find(x => x.id === id);
+      return `<li data-id="${id}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;
+        border-top:1px solid var(--border)">
+        <span class="mono" style="width:22px;text-align:right;font-size:11.5px;opacity:.6">${n + 1}</span>
+        <span style="flex:1;min-width:0"><span style="font-size:13px;font-weight:700">${esc(i.item)}</span>
+          <span class="cp" style="display:block">${esc(i.pedido)} · ${esc(i.composicao) || ''}</span></span>
+        <span class="mono" style="font-size:12px">${fmt(i.data_carga)}</span>
+        <span class="mono" style="font-size:12.5px;font-weight:700;width:26px;text-align:right">${i.qtd}</span>
+        <span style="display:flex;flex-direction:column;gap:1px">
+          <button class="hx" data-mv="-1" data-id="${id}" style="padding:1px 6px">▲</button>
+          <button class="hx" data-mv="1" data-id="${id}" style="padding:1px 6px">▼</button></span>
+      </li>`;
+    }).join('');
+    document.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => {
+      const i = ids.indexOf(b.dataset.id), j = i + Number(b.dataset.mv);
+      if(j < 0 || j >= ids.length) return;
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+      ordem = 'manual'; document.getElementById('ordSel').value = 'manual'; lista();
+    });
+  };
+  ordenar();
+  abrirM('Lista para o corte', 'Ordem de impressão',
+    `${its.length} itens · ${its.reduce((a, i) => a + i.qtd, 0)} un`, `
+    <section class="bl">
+      <div class="g2"><select id="ordSel" class="full">
+        ${Object.entries(ORD).map(([k, v]) => `<option value="${k}">Ordenar por ${v}</option>`).join('')}
+      </select></div>
+      <ol id="ordLista" style="list-style:none;margin:11px 0 0;padding:0;max-height:44vh;overflow-y:auto;
+        border:1px solid var(--border2);border-radius:var(--rad)"></ol>
+    </section>
+    <div class="acoes">
+      <button class="btn verde" id="btPrint">Imprimir</button>
+      <button class="btn" id="btFecharP">Fechar</button>
+    </div>`);
+  document.getElementById('ordSel').onchange = e => { ordem = e.target.value; ordenar(); lista(); };
+  document.getElementById('btFecharP').onclick = fecharM;
+  document.getElementById('btPrint').onclick = () => imprimir(ids, ORD[ordem]);
+  lista();
+};
+
+function imprimir(ids, rot){
+  const its = ids.map(id => dados.find(x => x.id === id));
+  const linhas = its.map((i, n) => `<tr>
+    <td class="n">${n + 1}</td><td class="n">${fmt(i.data_kanban)}</td><td class="n">${esc(i.pedido)}</td>
+    <td>${esc(i.classificacao)}</td><td class="n">${fmt(i.data_carga)}</td><td>${esc(i.carga)}</td>
+    <td class="n" style="text-align:center">${i.qtd}</td>
+    <td><div>${esc(i.item)}</div><div>${esc(i.composicao)}</div></td>
+    <td>${esc(i.observacao)}</td><td class="ck"></td></tr>`).join('');
+  const doc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Lista para o corte</title><style>
+@page{size:A4 landscape;margin:10mm}
+body{margin:0}
+body,body *{font-family:Arial,Helvetica,sans-serif!important;color:#000!important;
+  font-size:10px!important;font-weight:700!important}
+h1{margin:0 0 3px}
+.meta{margin-bottom:9px;border-bottom:1.5px solid #000;padding-bottom:6px}
+table{width:100%;border-collapse:collapse;border:.8px solid #000}
+th{text-transform:uppercase;text-align:left;border-bottom:1.2px solid #000;
+  border-right:.5px solid #000;padding:5px 4px}
+th:last-child,td:last-child{border-right:0}
+td{padding:5px 4px;border-bottom:.5px solid #000;border-right:.5px solid #000;vertical-align:middle}
+tr{page-break-inside:avoid} thead{display:table-header-group}
+.n{white-space:nowrap}
+.ck{width:22px}
+.ck::after{content:'';display:block;width:11px;height:11px;border:1px solid #000;margin:1px auto}
+</style></head><body>
+<h1>Lista para o corte — ${SETN[setorDaTela()]}</h1>
+<div class="meta">Lote ${fmt(hoje())} · ${its.length} itens · ${its.reduce((a, i) => a + i.qtd, 0)} un ·
+  ordenado por ${rot} · emitido por ${esc(perfil.nome)}</div>
+<table><thead><tr>
+<th style="width:20px">#</th><th style="width:46px">Data kanban</th><th style="width:60px">Pedido</th>
+<th style="width:74px">Classificação</th><th style="width:46px">Data de carga</th><th style="width:78px">Carga</th>
+<th style="width:26px">Qtd</th><th>Item / composição</th><th style="width:90px">Observação</th>
+<th style="width:22px">Ok</th></tr></thead><tbody>${linhas}</tbody></table>
+</body></html>`;
+  const velho = document.getElementById('ifp'); if(velho) velho.remove();
+  const f = document.createElement('iframe');
+  f.id = 'ifp';
+  f.setAttribute('style', 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0');
+  document.body.appendChild(f);
+  f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); }
+    catch(e){ window.open(URL.createObjectURL(new Blob([doc], {type:'text/html'})), '_blank'); } };
+  f.srcdoc = doc;
+}
+
+/* ---------- alteração ---------- */
+document.getElementById('baAlt').onclick = () => modalAlt(null);
+
+function modalAlt(itemClicado, editar){
+  const its = dados.filter(i => sel.has(i.pedido));
+  if(!its.length) return;
+  const jaTem = alteracoes.filter(a => sel.has(a.pedido));
+  const EX = {
+    cancel:['CANCELADO PELO CLIENTE','CANCELADO PELO COMERCIAL','PARAR PRODUÇÃO ATÉ SEGUNDA ORDEM'],
+    prio:['NÃO PODE ATRASAR','URGENTE','CARREGAR ATÉ'],
+    repro:['PASSOU PARA OUTUBRO','ENTREGAR SOMENTE FINAL DE SETEMBRO'],
+    vinc:['IR JUNTO COM PEDIDO','SUBSTITUÍDO PELO PEDIDO','DIVIDIDO COM PEDIDO'],
+    espec:['ALTERAÇÃO: ','APROVEITAR DA ABIMAD'],
+    insumo:['TECIDO CHEGOU DIA','MATERIAL LIBERADO']
+  };
+  let tipo = editar ? editar.tipo : null;
+  let escopo = editar && editar.itens ? 'itens' : 'ped';
+  let itens = new Set(editar && editar.itens ? editar.itens : []);
+  let setores = new Set(editar ? editar.setores : [0,1,2,3,4,5,6,7,8,9]);
+
+  abrirM('Alteração de pedido', editar ? 'Corrigir alteração' : 'Lançar para os setores',
+    `${sel.size} pedido(s) · ${its.length} itens`, `
+    ${editar || !jaTem.length ? '' : `<section class="bl"><h5>Já lançadas</h5>
+      ${jaTem.map(a => `<div class="hrow">
+        <span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
+        <span style="flex:1;min-width:0;font-size:12.5px">${esc(a.texto)}
+          <span style="display:block;font-size:10px;opacity:.55;font-family:'JetBrains Mono',monospace">${esc(a.pedido)} · ${fmt(a.data)} · ${esc(a.por)}</span></span>
+        <button class="hx" data-rmalt="${a.id}">remover</button>
+      </div>`).join('')}</section>`}
+    <section class="bl"><h5>Vale para</h5>
+      <div class="chips2" id="escopo">
+        <button type="button" class="c2 ${escopo === 'ped' ? 'on' : ''}" data-e="ped">Pedido inteiro</button>
+        <button type="button" class="c2 ${escopo === 'itens' ? 'on' : ''}" data-e="itens">Só alguns itens</button>
+      </div>
+      <div id="listaItens" hidden style="margin-top:10px;border:1px solid var(--border2);
+        border-radius:var(--rad);max-height:170px;overflow-y:auto"></div>
+    </section>
+    <section class="bl"><h5>Tipo</h5>
+      <div class="chips2" id="tipos">
+        ${Object.entries(TIPOS).map(([k, v]) => `<button type="button" class="c2 ${tipo === k ? 'on' : ''}" data-t="${k}">${v}</button>`).join('')}
+      </div>
+    </section>
+    <section class="bl"><h5>O que os setores precisam saber</h5>
+      <div class="g2"><textarea id="a_txt" class="full" placeholder="Escreva a alteração…">${editar ? esc(editar.texto) : ''}</textarea></div>
+      <div class="chips2" id="sugest" style="margin-top:9px"></div>
+    </section>
+    <section class="bl"><h5>Quem recebe</h5>
+      <div style="display:flex;gap:10px;margin-bottom:8px">
+        <button class="hx" id="stTodos" style="margin:0;text-decoration:underline">todos</button>
+        <button class="hx" id="stNenhum" style="margin:0;text-decoration:underline">nenhum</button>
+        <span class="dica" id="stCont" style="margin:0"></span>
+      </div>
+      <div class="chips2" id="setores"></div>
+    </section>
+    <div class="acoes">
+      <button class="btn roxa" id="aSalvar" disabled>${editar ? 'Salvar correção' : 'Lançar para os setores'}</button>
+      <button class="btn" id="aCancelar">Cancelar</button>
+    </div>`);
+
+  const val = () => {
+    const t = document.getElementById('a_txt').value.trim();
+    const ok = tipo && t && setores.size && (escopo === 'ped' || itens.size);
+    document.getElementById('aSalvar').disabled = !ok;
+  };
+  const pintarItens = () => {
+    const el = document.getElementById('listaItens');
+    el.hidden = escopo !== 'itens';
+    if(escopo !== 'itens') return;
+    el.innerHTML = its.map(i => `<label style="display:flex;gap:9px;padding:8px 11px;
+      border-top:1px solid var(--border);cursor:pointer;align-items:flex-start">
+      <input type="checkbox" class="cki" data-id="${i.id}" ${itens.has(i.id) ? 'checked' : ''}
+        style="width:16px;height:16px;accent-color:var(--roxo);margin-top:2px">
+      <span><span style="font-size:13px;font-weight:700">${esc(i.item)}</span>
+      <span class="cp" style="display:block">${esc(i.composicao) || ''}</span></span>
+      <span class="mono" style="margin-left:auto;font-size:12px">${i.qtd} un</span></label>`).join('');
+    el.querySelectorAll('.cki').forEach(c => c.onchange = () => {
+      c.checked ? itens.add(c.dataset.id) : itens.delete(c.dataset.id); val();
+    });
+  };
+  const pintarSet = () => {
+    document.getElementById('setores').innerHTML = SET.map((s, i) =>
+      `<button type="button" class="c2 ${setores.has(i) ? 'on' : ''}" data-s="${i}">${s}</button>`).join('');
+    document.getElementById('stCont').textContent =
+      setores.size === 10 ? 'todos os dez recebem' : `${setores.size} de 10`;
+    document.querySelectorAll('#setores .c2').forEach(b => b.onclick = () => {
+      const i = Number(b.dataset.s);
+      setores.has(i) ? setores.delete(i) : setores.add(i);
+      pintarSet(); val();
+    });
+  };
+  document.querySelectorAll('#escopo .c2').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#escopo .c2').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); escopo = b.dataset.e;
+    if(escopo === 'itens' && !itens.size && itemClicado) itens.add(itemClicado);
+    pintarItens(); val();
+  });
+  document.querySelectorAll('#tipos .c2').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#tipos .c2').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); tipo = b.dataset.t;
+    document.getElementById('sugest').innerHTML =
+      (EX[tipo] || []).map(e => `<button type="button" class="c2">${e}</button>`).join('');
+    document.querySelectorAll('#sugest .c2').forEach(s => s.onclick = () => {
+      document.getElementById('a_txt').value = s.textContent; val();
+    });
+    val();
+  });
+  document.getElementById('a_txt').oninput = val;
+  document.getElementById('stTodos').onclick = () => { setores = new Set([0,1,2,3,4,5,6,7,8,9]); pintarSet(); val(); };
+  document.getElementById('stNenhum').onclick = () => { setores = new Set(); pintarSet(); val(); };
+  document.getElementById('aCancelar').onclick = fecharM;
+  document.querySelectorAll('[data-rmalt]').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('alteracoes').delete().eq('id', b.dataset.rmalt);
+    if(error) return erro(error);
+    fecharM(); toast('Alteração removida'); await carregar();
+  });
+  pintarSet(); pintarItens(); val();
+  if(editar) setTimeout(val, 0);
+
+  document.getElementById('aSalvar').onclick = async () => {
+    const texto = document.getElementById('a_txt').value.trim().toUpperCase();
+    if(editar){
+      const { error } = await sb.from('alteracoes').update({
+        tipo, texto, setores:[...setores].sort((a, b) => a - b),
+        itens: escopo === 'itens' ? [...itens] : null,
+        editado_por:perfil.nome, editado_em:hoje()}).eq('id', editar.id);
+      if(error) return erro(error);
+      fecharM(); sel.clear(); toast('Alteração corrigida'); return carregar();
+    }
+    const linhas = [...sel].map(p => ({
+      pedido:p, tipo, texto,
+      setores:[...setores].sort((a, b) => a - b),
+      itens: escopo === 'itens'
+        ? its.filter(i => i.pedido === p && itens.has(i.id)).map(i => i.id)
+        : null,
+      data: hoje(), por: perfil.nome
+    })).filter(a => !a.itens || a.itens.length);
+    if(!linhas.length) return toast('Nenhum item selecionado', true);
+    const { error } = await sb.from('alteracoes').insert(linhas);
+    if(error) return erro(error);
+    fecharM(); sel.clear();
+    toast(`${TIPOS[tipo]} lançada em ${linhas.length} pedido(s)`);
+    await carregar();
+  };
+}
 
 /* ---------- etapa (corte) ---------- */
 function modalEtapa(id, etapa){
   const it = dados.find(x => x.id === id);
   const s = perfil.setor_id;
   const atual = it.etapas.find(x => x.setor_id === s && x.etapa === etapa);
-  const nome = etapa === 'corte_inicio' ? 'Corte início' : 'Corte fim';
+  const nome = nomeEtapa(etapa);
+  const par = paradoNoCorte(it, s);
+  const cfg = (ETAPAS[s] || []).find(e => e.k === etapa) || {viva:true};
   abrirM(nome, it.item, `${it.pedido} · ${it.composicao || 'sem composição'}`, `
     <section class="bl">
-      <div class="g2"><input type="date" id="e_data" class="full" value="${atual ? atual.data : hoje()}"></div>
+      ${par ? `<div class="alerta grave" style="margin:0 0 12px">Liberado para o corte em ${fmt(etapaDe(it, s, 'corte_inicio').data)} — <b>${par} dias</b> sem corte fim.</div>` : ''}
+      ${cfg.viva ? '' : '<span class="dica" style="margin:0 0 10px">Etapa opcional — hoje quase ninguém preenche.</span>'}
+      <div class="g2"><input type="date" id="e_data" class="full" value="${atual ? atual.data : (DATA || hoje())}"></div>
       <div class="acoes">
         <button class="btn verde" id="eSalvar">${atual ? 'Alterar data' : 'Registrar'}</button>
         ${atual ? '<button class="btn" id="eLimpar">Limpar</button>' : ''}
@@ -769,7 +1515,7 @@ function modalEtapa(id, etapa){
 function modalBaixa(id){
   alvo = dados.find(x => x.id === id);
   const s = perfil.setor_id;
-  const it = alvo, falta = it.qtd - completo(it, s);
+  const it = alvo, falta = it.qtd - completo(it, s), pp = porPeca(it, s);
   passo = Math.max(1, Math.min(1, falta));
   const bxs = it.baixas.filter(b => b.setor_id === s);
   const fim = fechado(it, s) || completo(it, s) >= it.qtd;
@@ -787,15 +1533,18 @@ function modalBaixa(id){
     : `<section class="bl"><h5>Registrar saída</h5>
       <div class="chips2" id="pecas">
         <button type="button" class="c2 on" data-p="">Item completo</button>
-        ${['encosto','assento','estrutura','aro','regulagem'].map(p => `<button type="button" class="c2" data-p="${p}">${p}</button>`).join('')}
+        ${pecasDe(it, s).map(p => `<button type="button" class="c2" data-p="${p}">${p}${pp[p] ? ` <b class="mono" style="font-size:10px;opacity:.7">${pp[p]}</b>` : ''}</button>`).join('')}
+        <button type="button" class="c2" data-p="__nova" style="border-style:dashed">+ outra</button>
       </div>
+      <input id="b_peca" placeholder="nome da peça" hidden style="width:100%;margin-top:8px;padding:9px 11px;
+        background:var(--bg3);border:1px solid var(--acc);border-radius:var(--rad)">
       <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
         <div class="step">
           <button type="button" id="bMenos">−</button>
           <span class="v" id="bVal">${passo}</span>
           <button type="button" id="bMais">+</button>
         </div>
-        <input type="date" id="b_data" value="${hoje()}" style="padding:9px 11px;background:var(--bg3);
+        <input type="date" id="b_data" value="${DATA || hoje()}" style="padding:9px 11px;background:var(--bg3);
           border:1px solid var(--border2);border-radius:var(--rad)">
       </div>
       <span class="dica" id="bSub">${falta} de ${it.qtd} ainda não saíram</span>
@@ -811,7 +1560,11 @@ function modalBaixa(id){
   let peca = '';
   document.querySelectorAll('#pecas .c2').forEach(b => b.onclick = () => {
     document.querySelectorAll('#pecas .c2').forEach(x => x.classList.remove('on'));
-    b.classList.add('on'); peca = b.dataset.p;
+    b.classList.add('on');
+    const nova = b.dataset.p === '__nova';
+    const inp = document.getElementById('b_peca');
+    inp.hidden = !nova; if(nova) inp.focus(); else inp.value = '';
+    peca = nova ? '__nova' : b.dataset.p;
     document.getElementById('bSub').textContent = peca
       ? 'peça avulsa — não fecha a linha' : `${falta} de ${it.qtd} ainda não saíram`;
   });
@@ -822,6 +1575,7 @@ function modalBaixa(id){
   if(bp) bp.onclick = () => { passo = Math.min(it.qtd, passo + 1); upd(); };
 
   const reg = async (qtd, pc) => {
+    if(pc === '__nova') pc = document.getElementById('b_peca').value.trim().toLowerCase();
     const { error } = await sb.from('baixas').insert({
       item_id:id, setor_id:s, data:document.getElementById('b_data').value,
       qtd, peca:pc || null, obs:document.getElementById('b_obs').value.trim() || null,
