@@ -404,12 +404,17 @@ let edicao = false, painel = false, verMortas = false, DATA = null;
 let ordem = [], recusas = [], lotes = [];
 let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
+let buscaFoco = false, buscaCaret = 0, buscaValor = '';
 const LIM_CORTE = 20;
 
+// Etapas internas por setor. Setor sem entrada aqui = só registra a saída,
+// e a tela dele não mostra fila, lote nem alerta de dias parados.
+//   1 Tubular   — corte com liberação de lote (confirmado com o Leandro)
+//   3 Tecelagem — entrada de estrutura, 90% preenchida na planilha (a confirmar)
+// Pintura, marcenaria, ateliê, montagem, ombrelone, embalagem, expedição e fusão:
+// só saída.
 const ETAPAS = {
-  3:[{k:'entrada_estrutura',n:'Entrada<br>estrutura',viva:true}],   // tecelagem
-  2:[{k:'entrada',n:'Entrada<br>pintura',viva:false}],              // pintura
-  8:[{k:'pre_embalagem',n:'Pré-<br>embalagem',viva:false}],         // embalagem
+  3:[{k:'entrada_estrutura',n:'Entrada<br>estrutura',viva:true}],
   1:[{k:'corte_inicio',n:'Corte<br>início',viva:true},
      {k:'corte_fim',n:'Corte<br>fim',viva:true},
      {k:'viracao_inicio',n:'Viração<br>início',viva:false},
@@ -576,7 +581,7 @@ async function iniciar(){
     await sb.auth.signOut(); return;
   }
   perfil = p;
-  edicao = false; sel.clear(); filtro = null; busca = ''; ordem = []; DATA = hoje();
+  edicao = false; sel.clear(); filtro = null; busca = ''; buscaValor = ''; buscaFoco = false; ordem = []; DATA = hoje();
   Object.keys(F).forEach(k => F[k] = '');
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
@@ -638,10 +643,6 @@ async function carregar(silencioso){
   pintar();
   const cx2 = document.querySelector('.ts');
   if(cx2){ cx2.scrollLeft = rolX; cx2.scrollTop = rolY; }
-  if(foco === 'q'){
-    const q = document.getElementById('q');
-    if(q){ q.focus(); if(cursor !== null) try { q.setSelectionRange(cursor, cursor); } catch(_){} }
-  }
   recarregando = false;
 }
 document.getElementById('btEditar').onclick = () => {
@@ -864,12 +865,26 @@ function ligarFiltro(){
     F[s.dataset.fk] = s.value; pintar();
   });
   const fl = document.getElementById('fLimpar');
-  if(fl) fl.onclick = () => { busca = ''; Object.keys(F).forEach(k => F[k] = ''); ordem = []; pintar(); };
+  if(fl) fl.onclick = () => { busca = ''; buscaValor = ''; buscaCaret = 0; Object.keys(F).forEach(k => F[k] = ''); ordem = []; pintar(); };
   document.querySelectorAll('th[data-col]').forEach(t => t.onclick = () => clicarCol(t.dataset.col));
   const q = document.getElementById('q');
   if(q){
-    q.oninput = e => { clearTimeout(q._t); const v = e.target.value;
-      q._t = setTimeout(() => { busca = v.trim(); pintar(); document.getElementById('q').focus(); }, 220); };
+    // o campo é recriado a cada repintura: devolve exatamente o que a pessoa digitou,
+    // com o cursor onde estava, senão as letras se embaralham
+    if(buscaFoco){
+      q.value = buscaValor;
+      q.focus();
+      try { q.setSelectionRange(buscaCaret, buscaCaret); } catch(_){}
+    }
+    q.oninput = e => {
+      buscaValor = e.target.value;
+      buscaCaret = e.target.selectionStart;
+      buscaFoco = true;
+      clearTimeout(q._t);
+      q._t = setTimeout(() => { busca = buscaValor.trim(); pintar(); }, 260);
+    };
+    q.onblur = () => { buscaFoco = false; };
+    q.onfocus = () => { buscaFoco = true; buscaValor = q.value; };
   }
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
     filtro = filtro === b.dataset.f ? null : b.dataset.f; pintar();
