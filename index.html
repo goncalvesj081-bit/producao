@@ -2090,19 +2090,39 @@ function mudou(){
   tRec = setTimeout(() => { pend = 0; carregar(true); }, 700);
 }
 
+let vivoOk = false;
 function ligarTempoReal(){
-  if(canal) sb.removeChannel(canal);
+  if(canal){ try { sb.removeChannel(canal); } catch(_){} }
+  vivoOk = false;
   canal = sb.channel('producao');
   ['itens','roteiro','baixas','fechamentos','etapas','alteracoes','recusas','lotes']
     .forEach(t => canal.on('postgres_changes', {event:'*', schema:'public', table:t}, mudou));
   canal.subscribe(st => {
-    if(st === 'SUBSCRIBED') marcarVivo('on', 'ao vivo');
-    else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT'){
-      marcarVivo('off', 'sem conexão');
-      setTimeout(ligarTempoReal, 4000);
+    if(st === 'SUBSCRIBED'){ vivoOk = true; marcarVivo('on', 'ao vivo'); }
+    else if(st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED'){
+      vivoOk = false;
+      marcarVivo('off', 'reconectando…');
+      clearTimeout(reconectar._t);
+      reconectar._t = setTimeout(() => { if(perfil) ligarTempoReal(); }, 4000);
     }
   });
 }
+function reconectar(){}
+
+// a aba volta do congelamento do navegador: o socket morreu, religa e recarrega
+function religarSePreciso(forcar){
+  if(!perfil) return;
+  if(!forcar && document.visibilityState === 'hidden') return;
+  if(!vivoOk){ ligarTempoReal(); carregar(true); }
+}
+window.addEventListener('pageshow', e => { if(e.persisted){ vivoOk = false; religarSePreciso(true); } });
+document.addEventListener('visibilitychange', () => religarSePreciso(false));
+window.addEventListener('online', () => { vivoOk = false; religarSePreciso(true); });
+window.addEventListener('offline', () => { vivoOk = false; marcarVivo('off', 'sem internet'); });
+// rede de segurança: a cada 45s confere se o canal ainda está de pé
+setInterval(() => {
+  if(perfil && document.visibilityState !== 'hidden' && !vivoOk) ligarTempoReal();
+}, 45000);
 
 /* ---------------- sessão existente ---------------- */
 if(TEM_CFG) sb.auth.getSession().then(({ data }) => { if(data.session) iniciar(); });
