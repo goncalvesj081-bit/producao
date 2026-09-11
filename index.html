@@ -407,6 +407,9 @@ const F = {};
 const LIM_CORTE = 20;
 
 const ETAPAS = {
+  3:[{k:'entrada_estrutura',n:'Entrada<br>estrutura',viva:true}],   // tecelagem
+  2:[{k:'entrada',n:'Entrada<br>pintura',viva:false}],              // pintura
+  8:[{k:'pre_embalagem',n:'Pré-<br>embalagem',viva:false}],         // embalagem
   1:[{k:'corte_inicio',n:'Corte<br>início',viva:true},
      {k:'corte_fim',n:'Corte<br>fim',viva:true},
      {k:'viracao_inicio',n:'Viração<br>início',viva:false},
@@ -418,7 +421,10 @@ const ETAPAS = {
      {k:'acab_inicio',n:'Acab.<br>início',viva:false}]
 };
 const etapasDe = s => (ETAPAS[s] || []).filter(e => verMortas || e.viva);
-const nomeEtapa = k => (ETAPAS[1].find(e => e.k === k) || {n:k}).n.replace('<br>', ' ');
+const nomeEtapa = k => {
+  for(const s in ETAPAS){ const e = ETAPAS[s].find(x => x.k === k); if(e) return e.n.replace('<br>', ' '); }
+  return k;
+};
 
 const menos1 = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() - n);
   return d.toISOString().slice(0,10); };
@@ -438,9 +444,13 @@ function porPeca(it, s){
   return m;
 }
 const etapaDe = (it, s, k) => it.etapas.find(e => e.setor_id === s && e.etapa === k);
+const etapaEntrada = s => (ETAPAS[s] || [])[0];
+const etapaSaida = s => (ETAPAS[s] || []).find(e => /fim$/.test(e.k));
 function paradoNoCorte(it, s){
-  if(s !== 1) return 0;
-  const ci = etapaDe(it, s, 'corte_inicio'), cf = etapaDe(it, s, 'corte_fim');
+  const ent = etapaEntrada(s);
+  if(!ent) return 0;
+  const sai = etapaSaida(s);
+  const ci = etapaDe(it, s, ent.k), cf = sai ? etapaDe(it, s, sai.k) : null;
   if(!ci || cf || !passa(it, s) || estado(it, s) === 'ok') return 0;
   const d = Math.round((new Date(hoje()+'T00:00:00') - new Date(ci.data+'T00:00:00'))/864e5);
   return d > LIM_CORTE ? d : 0;
@@ -582,6 +592,23 @@ async function iniciar(){
 }
 
 /* ---------------- CARGA DE DADOS ---------------- */
+// o PostgREST corta em 1.000 linhas por consulta; aqui buscamos em páginas até acabar
+async function todos(tabela, ordem){
+  const PAG = 1000;
+  let saida = [], de = 0;
+  for(;;){
+    let q = sb.from(tabela).select('*').range(de, de + PAG - 1);
+    if(ordem) q = q.order(ordem);
+    const { data, error } = await q;
+    if(error) return {data:null, error};
+    saida = saida.concat(data || []);
+    if(!data || data.length < PAG) break;
+    de += PAG;
+    if(de > 200000) break;
+  }
+  return {data:saida, error:null};
+}
+
 async function carregar(silencioso){
   if(recarregando) return;
   recarregando = true;
@@ -591,13 +618,8 @@ async function carregar(silencioso){
   const cursor = foco === 'q' ? document.activeElement.selectionStart : null;
   if(!silencioso) document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
   const [itens, rot, bx, fec, alt, etp, rec] = await Promise.all([
-    sb.from('itens').select('*').order('pedido'),
-    sb.from('roteiro').select('*'),
-    sb.from('baixas').select('*'),
-    sb.from('fechamentos').select('*'),
-    sb.from('alteracoes').select('*'),
-    sb.from('etapas').select('*'),
-    sb.from('recusas').select('*')
+    todos('itens', 'pedido'), todos('roteiro'), todos('baixas'), todos('fechamentos'),
+    todos('alteracoes'), todos('etapas'), todos('recusas')
   ]);
   for(const r of [itens, rot, bx, fec, alt, etp, rec]) if(r.error){ recarregando = false; return erro(r.error); }
   alteracoes = alt.data || [];
@@ -690,8 +712,8 @@ function filtrar(){
     l = l.filter(i => passa(i, s));
     if(filtro === 'pend') l = l.filter(i => ['pe','pa'].includes(estado(i, s)));
     if(filtro === 'ok') l = l.filter(i => estado(i, s) === 'ok');
-    if(filtro === 'fila') l = l.filter(i => i.data_carga &&
-      !i.etapas.some(e => e.setor_id === s && e.etapa === 'corte_inicio') && estado(i, s) !== 'ok');
+    if(filtro === 'fila'){ const e0 = etapaEntrada(s);
+      l = e0 ? l.filter(i => i.data_carga && !etapaDe(i, s, e0.k) && estado(i, s) !== 'ok') : []; }
   } else {
     if(filtro === 'sem') l = l.filter(i => !i.data_carga);
     if(filtro === 'ok') l = l.filter(i => i.data_carga);
@@ -911,17 +933,17 @@ function telaPCP(){
             <span class="bar"><i style="width:${p}%;background:${cor}"></i></span></div></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
           <td><button class="itbt ped" data-item="${it.id}">${esc(it.pedido)}</button></td>
-          <td style="font-size:11.5px">${esc(it.classificacao)}</td>
+          <td><button class="itbt" data-item="${it.id}" style="font-size:11.5px">${esc(it.classificacao)}</button></td>
           <td class="crg mono" style="font-size:12px;${d !== null && d < 0 ? 'font-weight:700' : ''}">${fmt(it.data_carga)}</td>
           <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="">a definir</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
           <td>${podeEditar
             ? `<button class="celbt" data-alt="${it.pedido}" data-item="${it.id}">${corpoAlt(as)}</button>`
             : corpoAlt(as)}</td>
-          <td><div class="it">${esc(it.item)}</div></td>
-          <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
-          <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
-          <td style="font-size:11.5px">${esc(it.cliente) || '—'}</td>
+          <td><button class="itbt" data-item="${it.id}"><span class="it">${esc(it.item)}</span></button></td>
+          <td><button class="itbt" data-item="${it.id}"><span class="cp">${esc(it.composicao) || '—'}</span></button></td>
+          <td><button class="itbt" data-item="${it.id}"><span class="obs">${esc(it.observacao) || '—'}</span></button></td>
+          <td><button class="itbt" data-item="${it.id}" style="font-size:11.5px">${esc(it.cliente) || '—'}</button></td>
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
@@ -977,7 +999,8 @@ function telaSetor(){
   const podeBaixar = editando();
   const lista0 = filtrar();
   const pend = dados.filter(i => passa(i, s) && ['pe','pa'].includes(estado(i, s))).length;
-  const naFila = i => passa(i, s) && i.data_carga && !etapaDe(i, s, 'corte_inicio') && estado(i, s) !== 'ok';
+  const ent = etapaEntrada(s);
+  const naFila = i => ent && passa(i, s) && i.data_carga && !etapaDe(i, s, ent.k) && estado(i, s) !== 'ok';
   const nFila = dados.filter(naFila).length;
   const nParado = dados.filter(i => paradoNoCorte(i, s)).length;
   const modoFila = filtro === 'fila' && podeBaixar;
@@ -1016,7 +1039,7 @@ function telaSetor(){
         const par = paradoNoCorte(it, s), pp = porPeca(it, s);
         const celEt = et => {
           const ob = etapaDe(it, s, et.k);
-          if(et.k === 'corte_fim' && par) return `<td class="c">${podeBaixar
+          if(etapaSaida(s) && et.k === etapaSaida(s).k && par) return `<td class="c">${podeBaixar
             ? `<button class="pill p-parado" data-et="${et.k}" data-id="${it.id}"
                  title="Liberado há ${par} dias e ainda sem corte fim"><span class="ic">${par}</span><span class="dd">dias</span></button>`
             : `<span class="pill p-parado"><span class="ic">${par}</span><span class="dd">dias</span></span>`}</td>`;
@@ -1908,7 +1931,7 @@ function modalEtapa(id, etapa){
   const cfg = (ETAPAS[s] || []).find(e => e.k === etapa) || {viva:true};
   abrirM(nome, it.item, `${it.pedido} · ${it.composicao || 'sem composição'}`, `
     <section class="bl">
-      ${par ? `<div class="alerta grave" style="margin:0 0 12px">Liberado para o corte em ${fmt(etapaDe(it, s, 'corte_inicio').data)} — <b>${par} dias</b> sem corte fim.</div>` : ''}
+      ${par ? `<div class="alerta grave" style="margin:0 0 12px">Liberado em ${fmt(etapaDe(it, s, etapaEntrada(s).k).data)} — <b>${par} dias</b> sem corte fim.</div>` : ''}
       ${cfg.viva ? '' : '<span class="dica" style="margin:0 0 10px">Etapa opcional — hoje quase ninguém preenche.</span>'}
       <div class="g2"><input type="date" id="e_data" class="full" value="${atual ? atual.data : (DATA || hoje())}"></div>
       <div class="acoes">
