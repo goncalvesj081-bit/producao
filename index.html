@@ -158,6 +158,22 @@ tbody tr:nth-child(even) td.crg{background:rgba(39,201,126,.17)}
 .p-pa{background:var(--amber-bg);border-color:var(--amber)}
 button.pill{cursor:pointer}
 button.pill:hover{filter:brightness(1.3)}
+.itbt{background:none;border:0;padding:4px 3px;text-align:left;width:100%;cursor:pointer;
+  border-radius:5px;font:inherit;border-bottom:1px solid transparent}
+.itbt:hover{background:var(--bg3);border-bottom-color:var(--acc)}
+.itbt .it,.itbt .cp,.itbt .obs{display:block}
+.grade{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.gc{border:1.5px solid var(--border2);border-radius:var(--rad);padding:8px 6px;text-align:center;background:var(--bg3)}
+.gc .s{font-size:10px;font-weight:800;letter-spacing:.06em;font-family:'JetBrains Mono',monospace}
+.gc .v{font-size:11.5px;font-weight:700;margin-top:4px;font-family:'JetBrains Mono',monospace;line-height:1.25}
+.gc.ok{border-color:var(--green);background:var(--green-bg)}
+.gc.pa{border-color:var(--amber);background:var(--amber-bg)}
+.gc.pe{border-color:var(--red);background:var(--red-bg)}
+.gc.sk{border-color:var(--border3);background:var(--gray-bg)}
+.dado{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.dado:last-child{border-bottom:0}
+.dado .k{width:110px;flex:none;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:800}
+.dado .v{flex:1;font-weight:600;line-height:1.4;word-break:break-word}
 .celbt{background:none;border:1px solid transparent;border-radius:var(--rad);padding:5px 7px;
   cursor:pointer;text-align:left;width:100%;min-width:150px}
 .celbt:hover{border-color:var(--roxo);background:var(--roxo-bg)}
@@ -894,7 +910,7 @@ function telaPCP(){
           <td class="c"><div class="pct"><b class="mono">${p}%</b>
             <span class="bar"><i style="width:${p}%;background:${cor}"></i></span></div></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
-          <td class="ped">${esc(it.pedido)}</td>
+          <td><button class="itbt ped" data-item="${it.id}">${esc(it.pedido)}</button></td>
           <td style="font-size:11.5px">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px;${d !== null && d < 0 ? 'font-weight:700' : ''}">${fmt(it.data_carga)}</td>
           <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="">a definir</span>'}</td>
@@ -933,6 +949,7 @@ function telaPCP(){
     st.checked = peds.length && peds.every(p => sel.has(p));
     st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); atualizarSelecao(); };
   }
+  document.querySelectorAll('[data-item]').forEach(b => b.onclick = () => modalItem(b.dataset.item));
   document.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => modalRecusa(Number(b.dataset.rec)));
   document.querySelectorAll('[data-det]').forEach(b => b.onclick = () => {
     const [id, s] = b.dataset.det.split('|'); modalDetalhe(id, Number(s));
@@ -1027,15 +1044,15 @@ function telaSetor(){
             : `<span class="pill p-${e}">${ent}</span>`}</td>
           <td class="c"><span class="pill ${nomes.length ? (e === 'ok' ? 'p-ok' : 'p-pa') : ''}">${parc}</span></td>
           <td class="mono" style="font-size:12px">${fmt(it.data_kanban)}</td>
-          <td class="ped">${esc(it.pedido)}</td>
+          <td><button class="itbt ped" data-item="${it.id}">${esc(it.pedido)}</button></td>
           <td style="font-size:11.5px">${esc(it.classificacao)}</td>
           <td class="crg mono" style="font-size:12px">${fmt(it.data_carga)}${d !== null && d < 0 ? ' ⚠' : ''}</td>
           <td class="crg" style="font-size:12.5px;font-weight:700">${esc(it.carga) || '<span style="">—</span>'}</td>
           <td class="mono" style="text-align:center;font-weight:700">${it.qtd}</td>
           <td>${corpoAlt(as)}</td>
-          <td><div class="it">${esc(it.item)}</div></td>
-          <td><div class="cp">${esc(it.composicao) || '—'}</div></td>
-          <td><div class="obs">${esc(it.observacao) || '—'}</div></td>
+          <td><button class="itbt" data-item="${it.id}"><span class="it">${esc(it.item)}</span></button></td>
+          <td><button class="itbt" data-item="${it.id}"><span class="cp">${esc(it.composicao) || '—'}</span></button></td>
+          <td><button class="itbt" data-item="${it.id}"><span class="obs">${esc(it.observacao) || '—'}</span></button></td>
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
@@ -1074,6 +1091,7 @@ function telaSetor(){
       `${new Set(its.map(i => i.pedido)).size} pedidos · ${its.reduce((a, i) => a + i.qtd, 0)} un${venc ? ` · ${venc} com carga vencida` : ''}`;
   }
 
+  document.querySelectorAll('[data-item]').forEach(b => b.onclick = () => modalItem(b.dataset.item));
   // clique rápido / botão direito / toque longo
   document.querySelectorAll('[data-et]').forEach(b => {
     const id = b.dataset.id, k = b.dataset.et;
@@ -1259,6 +1277,68 @@ function modalCarga(){
     if(error) return erro(error);
     fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar(true);
   };
+}
+
+/* ---------- detalhe completo do item ---------- */
+function modalItem(id){
+  const it = dados.find(x => x.id === id);
+  if(!it) return;
+  const as = altsDe(it), d = dias(it.data_carga);
+  const p = pronto(it);
+  const dado = (k, v) => `<div class="dado"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`;
+  const grade = SETN.map((n, s) => {
+    const e = estado(it, s), pp = porPeca(it, s), nomes = Object.keys(pp);
+    const v = e === 'ok' ? fmt(dataFim(it, s))
+      : e === 'sk' ? 'não passa'
+      : e === 'pa' ? (nomes.length ? nomes.map(x => x.slice(0,3) + ' ' + pp[x]).join('<br>') : completo(it, s) + '/' + it.qtd)
+      : 'pendente';
+    return `<div class="gc ${e}"><div class="s">${SET[s]}</div><div class="v">${v}</div></div>`;
+  }).join('');
+  const hist = [];
+  for(let s = 0; s < 10; s++){
+    it.etapas.filter(x => x.setor_id === s).forEach(x =>
+      hist.push({d:x.data, q:nomeEtapa(x.etapa), s, por:x.por, obs:x.lote_id ? 'lote' : ''}));
+    it.baixas.filter(b => b.setor_id === s).forEach(b =>
+      hist.push({d:b.data, q:`${b.qtd} ${b.peca || 'un'}`, s, por:b.por, obs:b.obs || ''}));
+    const f = fechado(it, s);
+    if(f) hist.push({d:f.data, q:'concluído', s, por:f.por, obs:''});
+  }
+  hist.sort((a, b) => (a.d || '').localeCompare(b.d || ''));
+  abrirM('Item', it.item, `${it.pedido} · seq ${it.seq}`, `
+    <section class="bl"><h5>Dados do pedido</h5>
+      ${dado('Pedido', esc(it.pedido))}
+      ${dado('Classificação', esc(it.classificacao))}
+      ${dado('Cliente', esc(it.cliente))}
+      ${dado('Família', esc(it.familia))}
+      ${dado('Quantidade', it.qtd + ' un')}
+      ${dado('Data kanban', fmt(it.data_kanban))}
+      ${dado('Carga', it.carga ? `${esc(it.carga)} · ${fmt(it.data_carga)}${d !== null ? (d < 0 ? ` · venceu há ${-d} dias` : d === 0 ? ' · sai hoje' : ` · em ${d} dias`) : ''}` : 'a definir')}
+      ${dado('Composição', esc(it.composicao))}
+      ${dado('Observação', esc(it.observacao))}
+    </section>
+    <section class="bl"><h5>Situação nos setores — ${p}% pronto</h5>
+      <div class="grade">${grade}</div>
+    </section>
+    ${as.length ? `<section class="bl"><h5>Alterações</h5>
+      ${as.map(a => `<div class="hrow">
+        <span class="tag t-${a.tipo}">${TIPOS[a.tipo]}</span>
+        <span style="flex:1;min-width:0;font-size:12.5px">${esc(a.texto)}
+          <span style="display:block;font-size:10px;font-family:'JetBrains Mono',monospace">${a.itens ? 'só este item · ' : 'pedido inteiro · '}${fmt(a.data)} · ${esc(a.por)}</span></span>
+      </div>`).join('')}</section>` : ''}
+    <section class="bl"><h5>Histórico</h5>
+      ${hist.length ? hist.map(x => `<div class="hrow">
+        <span class="hq">${SET[x.s]}</span>
+        <span class="mono" style="font-size:12.5px">${fmt(x.d)}</span>
+        <span style="flex:1;min-width:0;font-size:12.5px">${esc(x.q)}
+          <span style="display:block;font-size:10px">${esc(x.por) || ''}${x.obs ? ' · ' + esc(x.obs) : ''}</span></span>
+      </div>`).join('') : '<span class="dica" style="margin:0">Nada registrado ainda.</span>'}
+    </section>
+    <section class="bl"><h5>Chave de importação</h5>
+      <div class="cp" style="word-break:break-all">${esc(it.chave_import)}</div>
+      <span class="dica">É por ela que o sistema reconhece a linha na reimportação. O identificador interno é outro e nunca muda.</span>
+      <div class="acoes"><button class="btn" id="itFechar">Fechar</button></div>
+    </section>`);
+  document.getElementById('itFechar').onclick = fecharM;
 }
 
 /* ---------- detalhe da baixa de um setor (visão do PCP) ---------- */
