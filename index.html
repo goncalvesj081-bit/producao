@@ -710,6 +710,41 @@ function feed(){
   });
 }
 
+function atualizarSelecao(){
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    const c = tr.querySelector('.ck, .ckf');
+    if(!c) return;
+    const marcada = tela === 'pcp' ? sel.has(c.dataset.p) : sel.has(c.dataset.id);
+    c.checked = marcada;
+    tr.classList.toggle('sel', marcada);
+  });
+  const st = document.getElementById('selTodos') || document.getElementById('selTodosF');
+  if(st){
+    const cs = [...document.querySelectorAll('.ck, .ckf')];
+    st.checked = cs.length > 0 && cs.every(c => c.checked);
+  }
+  const ba = document.getElementById('ba');
+  if(tela === 'pcp'){
+    const its = dados.filter(i => sel.has(i.pedido));
+    ba.hidden = !(editando() && sel.size);
+    if(sel.size){
+      document.getElementById('baN').textContent = sel.size;
+      document.getElementById('baLbl').textContent = sel.size > 1 ? 'pedidos' : 'pedido';
+      document.getElementById('baRes').textContent = `${its.length} itens`;
+    }
+  } else {
+    const its = dados.filter(i => sel.has(i.id));
+    ba.hidden = !(filtro === 'fila' && editando() && sel.size);
+    if(sel.size){
+      const venc = its.filter(i => dias(i.data_carga) < 0).length;
+      document.getElementById('baN').textContent = sel.size;
+      document.getElementById('baLbl').textContent = sel.size > 1 ? 'itens' : 'item';
+      document.getElementById('baRes').textContent =
+        `${new Set(its.map(i => i.pedido)).size} pedidos · ${its.reduce((a, i) => a + i.qtd, 0)} un${venc ? ` · ${venc} com carga vencida` : ''}`;
+    }
+  }
+}
+
 function pintar(){
   const be = document.getElementById('btEditar');
   be.hidden = !podeEscrever();
@@ -745,7 +780,13 @@ function pintar(){
   document.querySelectorAll('.aba').forEach(a => a.classList.toggle('on', a.dataset.t === tela));
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
     ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[perfil.papel === 'setor' ? perfil.setor_id : 1]}</em>`;
+  const cx = document.querySelector('.ts');
+  const rx = cx ? cx.scrollLeft : 0, ry = cx ? cx.scrollTop : 0;
+  const janela = window.scrollY;
   tela === 'pcp' ? telaPCP() : telaSetor();
+  const cx2 = document.querySelector('.ts');
+  if(cx2){ cx2.scrollLeft = rx; cx2.scrollTop = ry; }
+  try { window.scrollTo(0, janela); } catch(_){}
   feed();
 }
 
@@ -859,13 +900,14 @@ function telaPCP(){
     };
   }
   document.querySelectorAll('.ck').forEach(c => c.onchange = () => {
-    c.checked ? sel.add(c.dataset.p) : sel.delete(c.dataset.p); pintar();
+    c.checked ? sel.add(c.dataset.p) : sel.delete(c.dataset.p);
+    atualizarSelecao();
   });
   const st = document.getElementById('selTodos');
   if(st){
     const peds = [...new Set(lista.map(i => i.pedido))];
     st.checked = peds.length && peds.every(p => sel.has(p));
-    st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); pintar(); };
+    st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); atualizarSelecao(); };
   }
   document.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => modalRecusa(Number(b.dataset.rec)));
   document.querySelectorAll('[data-alt]').forEach(b => b.onclick = () => {
@@ -979,13 +1021,14 @@ function telaSetor(){
   if(bm) bm.onclick = () => { verMortas = !verMortas; pintar(); };
 
   document.querySelectorAll('.ckf').forEach(c => c.onchange = () => {
-    c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id); pintar();
+    c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id);
+    atualizarSelecao();
   });
   const stf = document.getElementById('selTodosF');
   if(stf){
     const ids = lista.map(i => i.id);
     stf.checked = ids.length && ids.every(i => sel.has(i));
-    stf.onchange = () => { ids.forEach(i => stf.checked ? sel.add(i) : sel.delete(i)); pintar(); };
+    stf.onchange = () => { ids.forEach(i => stf.checked ? sel.add(i) : sel.delete(i)); atualizarSelecao(); };
   }
   if(!modoFila) sel.clear();
 
@@ -1114,7 +1157,7 @@ async function salvarNovo(){
 }
 
 /* ---------- carga ---------- */
-document.getElementById('baLimpar').onclick = () => { sel.clear(); pintar(); };
+document.getElementById('baLimpar').onclick = () => { sel.clear(); atualizarSelecao(); };
 document.getElementById('baCarga').onclick = () => modalCarga();
 function modalCarga(){
   const its = dados.filter(i => sel.has(i.pedido));
@@ -1267,7 +1310,7 @@ async function lerPlanilha(file){
         if(v) marcados++;
         if(v === 'VAZIO' || v === 'X' || v === '-') o._naoPassa.push(s);
       });
-      o._naoPassa.push(9);                       // expedição não vem no modelo
+      // expedição não vem no modelo da planilha e sempre passa
       o._semRoteiro = marcados === 0;
       const n = (vistas.get(o._chave) || 0) + 1;
       vistas.set(o._chave, n);
@@ -1289,7 +1332,7 @@ function modalPrevia(){
   const repet = itens.filter(i => i._repetida).length;
   const semRot = itens.filter(i => i._semRoteiro).length;
   const comAlt = itens.filter(i => i._alteracao).length;
-  const porSetor = SETOR_COL.map((_, s) => novos.filter(i => !i._naoPassa.includes(s)).length);
+  const porSetor = SETN.map((_, s) => novos.filter(i => !i._naoPassa.includes(s)).length);
   abrirM('Importar planilha', arquivo,
     `${itens.length} linhas lidas · ${new Set(itens.map(i => i.pedido)).size} pedidos`, `
     <section class="bl"><h5>O que vai entrar</h5>
@@ -1303,9 +1346,9 @@ function modalPrevia(){
       ${semRot ? `<div class="alerta">${semRot} linhas sem nenhum OK/VAZIO marcado — vão entrar passando por todos os setores.</div>` : ''}
     </section>
     <section class="bl"><h5>Roteiro dos ${novos.length} novos</h5>
-      <div class="chips2">${SETN.slice(0,9).map((n, s) =>
+      <div class="chips2">${SETN.map((n, s) =>
         `<span class="c2 ${porSetor[s] ? 'on' : ''}">${SET[s]} ${porSetor[s]}</span>`).join('')}</div>
-      <span class="dica">OK = passa · VAZIO = não passa. A expedição não vem no modelo e entra como “não passa”.</span>
+      <span class="dica">OK = passa · VAZIO = não passa. A expedição não vem no modelo da planilha e entra sempre passando.</span>
     </section>
     ${comAlt ? `<section class="bl"><h5>Alterações na planilha</h5>
       <span class="dica">${comAlt} linhas trazem texto em ALTERAÇÃO DE PEDIDO. Elas serão lançadas como alteração para os dez setores, classificadas pelo texto.</span>
@@ -1315,7 +1358,7 @@ function modalPrevia(){
         ${novos.slice(0, 12).map(i => `<div style="padding:7px 10px;border-top:1px solid var(--border);font-size:12px">
           <b>${esc(i.item)}</b> <span class="mono" style="opacity:.6">${esc(i.pedido)}${i._seq > 1 ? ' · seq ' + i._seq : ''}</span>
           <div class="cp">${esc(i.composicao)}</div>
-          <div style="opacity:.6;font-size:11px">passa em: ${SETN.slice(0,9).filter((_, s) => !i._naoPassa.includes(s)).join(', ') || '(nenhum)'}</div>
+          <div style="opacity:.6;font-size:11px">passa em: ${SETN.filter((_, s) => !i._naoPassa.includes(s)).join(', ') || '(nenhum)'}</div>
         </div>`).join('')}
       </div>
     </section>
