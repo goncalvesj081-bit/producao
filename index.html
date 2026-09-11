@@ -84,6 +84,10 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 .mini:hover{border-color:var(--acc)}
 .mini.on{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.14)}
 
+.faixa{padding:8px 18px;font-size:12.5px;font-weight:600;background:var(--gray-bg);
+  border-bottom:1px solid var(--border2);opacity:.75}
+.faixa.on{background:rgba(77,159,255,.12);border-bottom-color:rgba(77,159,255,.35);opacity:1}
+.mini.editando{border-color:var(--acc);border-width:2px;background:rgba(77,159,255,.2)}
 .wrap{padding:14px 18px 90px}
 .linha{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
 .cont{font-size:13.5px;font-weight:700;opacity:.75}
@@ -230,11 +234,13 @@ button.pill:hover{filter:brightness(1.3)}
       <button class="aba" data-t="setor">RQ 200 · Tubular</button>
     </div>
     <span class="quem" id="quem"></span>
+    <button class="mini" id="btEditar" hidden></button>
     <button class="mini" id="btRecarregar" title="Recarregar do banco">↻</button>
     <button class="mini" id="btTema">◐</button>
     <button class="mini" id="btSair">Sair</button>
   </div>
 </header>
+<div class="faixa" id="faixa"></div>
 <div class="wrap" id="wrap"></div>
 </div>
 
@@ -274,6 +280,15 @@ const TIPOS = {cancel:'Cancelamento',prio:'Prioridade',repro:'Reprogramação',
 
 let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
+let edicao = false;
+const setorDaTela = () => perfil.papel === 'setor' ? perfil.setor_id : 1;
+function podeEscrever(){
+  if(!perfil) return false;
+  return tela === 'pcp'
+    ? perfil.papel === 'pcp'
+    : perfil.papel === 'setor' && perfil.setor_id === setorDaTela();
+}
+const editando = () => podeEscrever() && edicao;
 
 // 'JOÃO PEDRO' -> 'joao.pedro@aluminas.local'  (mesma regra da função email_interno no banco)
 function emailInterno(usuario){
@@ -342,6 +357,7 @@ async function iniciar(){
     await sb.auth.signOut(); return;
   }
   perfil = p;
+  edicao = false; sel.clear(); filtro = null; busca = '';
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
   document.getElementById('quem').innerHTML =
@@ -349,7 +365,7 @@ async function iniciar(){
   tela = p.papel === 'setor' ? 'setor' : 'pcp';
   document.getElementById('abas').hidden = p.papel !== 'pcp';
   document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
-    tela = a.dataset.t; sel.clear(); pintar();
+    tela = a.dataset.t; sel.clear(); edicao = false; fecharM(); pintar();
   });
   await carregar();
 }
@@ -380,6 +396,13 @@ async function carregar(){
   });
   pintar();
 }
+document.getElementById('btEditar').onclick = () => {
+  if(!podeEscrever()) return;
+  edicao = !edicao;
+  if(!edicao){ sel.clear(); fecharM(); }
+  pintar();
+  toast(edicao ? 'Edição liberada' : 'De volta ao modo leitura');
+};
 document.getElementById('btRecarregar').onclick = carregar;
 document.getElementById('btTema').onclick = () => {
   const h = document.documentElement;
@@ -430,6 +453,21 @@ function filtrar(){
 
 /* ---------------- PINTAR ---------------- */
 function pintar(){
+  const be = document.getElementById('btEditar');
+  be.hidden = !podeEscrever();
+  be.textContent = edicao ? '✓ Editando — sair' : '✎ Editar';
+  be.classList.toggle('editando', edicao);
+  const fx = document.getElementById('faixa');
+  fx.classList.toggle('on', edicao);
+  fx.textContent = !podeEscrever()
+    ? (tela === 'pcp'
+        ? 'Somente leitura. Quem define pedido e carga é o PCP.'
+        : `Somente leitura. Quem baixa é o líder do ${SETN[setorDaTela()].toLowerCase()}.`)
+    : edicao
+      ? (tela === 'pcp'
+          ? 'Modo edição — você pode criar pedidos e definir carga.'
+          : 'Modo edição — você pode registrar etapas e baixas.')
+      : 'Somente leitura. Clique em Editar para liberar as ações.';
   document.querySelectorAll('.aba').forEach(a => a.classList.toggle('on', a.dataset.t === tela));
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
     ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[perfil.papel === 'setor' ? perfil.setor_id : 1]}</em>`;
@@ -456,7 +494,7 @@ function ligarFiltro(){
 
 /* ---------- RQ 213 (PCP) ---------- */
 function telaPCP(){
-  const podeEditar = perfil.papel === 'pcp';
+  const podeEditar = editando();
   const lista = filtrar();
   const nSem = dados.filter(i => !i.data_carga).length;
   document.getElementById('wrap').innerHTML =
@@ -531,7 +569,7 @@ function telaPCP(){
 /* ---------- RQ 200 (setor) ---------- */
 function telaSetor(){
   const s = perfil.papel === 'setor' ? perfil.setor_id : 1;
-  const podeBaixar = perfil.papel === 'setor' && perfil.setor_id === s;
+  const podeBaixar = editando();
   const lista = filtrar();
   const pend = dados.filter(i => passa(i, s) && ['pe','pa'].includes(estado(i, s))).length;
   document.getElementById('wrap').innerHTML =
