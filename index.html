@@ -230,9 +230,9 @@ button.pill:hover{filter:brightness(1.3)}
 .dataseg button.on{background:var(--bg5);opacity:1}
 .dataseg button i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.65;margin-left:4px}
 .dataseg.alt{border-color:var(--amber);border-width:2px;background:var(--amber-bg)}
-.dataseg .outra{position:relative;display:flex;align-items:center}
-.dataseg .outra span{padding:6px 11px;font-size:12.5px;font-weight:700;opacity:.6;cursor:pointer}
-.dataseg .outra input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.dataseg #dtOutra{padding:5px 8px;font-size:12px;font-weight:700;background:var(--bg5);
+  border:1px solid var(--border2);border-radius:6px;font-family:'JetBrains Mono',monospace;max-width:140px}
+.dataseg #dtOutra[hidden]{display:none}
 .avisoData{padding:8px 18px;font-size:12.5px;font-weight:700;background:var(--amber-bg);
   border-bottom:1px solid var(--amber)}
 .avisoData[hidden]{display:none}
@@ -322,7 +322,8 @@ th[data-col]:hover{opacity:1}
     <div class="dataseg" id="dataseg" hidden>
       <button data-dd="0" class="on">Hoje <i></i></button>
       <button data-dd="1">Ontem <i></i></button>
-      <label class="outra"><input type="date" id="dtOutra"><span>Outra</span></label>
+      <button id="btOutra">Outra</button>
+      <input type="date" id="dtOutra" hidden>
     </div>
     <button class="mini" id="btPainel" hidden>Alterações</button>
     <button class="mini" id="btEditar" hidden></button>
@@ -614,8 +615,19 @@ document.getElementById('btEditar').onclick = () => {
 };
 document.querySelectorAll('#dataseg button[data-dd]').forEach(b =>
   b.onclick = () => { DATA = menos1(hoje(), Number(b.dataset.dd)); pintar(); });
-document.getElementById('dtOutra').onchange = e => { if(e.target.value){ DATA = e.target.value; pintar(); } };
+document.getElementById('btOutra').onclick = () => {
+  const i = document.getElementById('dtOutra');
+  i.hidden = false;
+  i.value = DATA;
+  i.focus();
+  if(i.showPicker) try { i.showPicker(); } catch(_){}
+};
+document.getElementById('dtOutra').onchange = e => {
+  if(e.target.value){ DATA = e.target.value; pintar(); }
+};
 document.getElementById('voltarHoje').onclick = () => { DATA = hoje(); pintar(); };
+document.querySelectorAll('#dataseg button[data-dd]').forEach(b =>
+  b.addEventListener('click', () => { document.getElementById('dtOutra').hidden = true; }));
 document.getElementById('btPainel').onclick = () => { painel = !painel; pintar(); };
 document.getElementById('btRecarregar').onclick = carregar;
 document.getElementById('btTema').onclick = () => {
@@ -774,6 +786,11 @@ function pintar(){
     b.classList.toggle('on', DATA === dd);
     b.querySelector('i').textContent = fmt(dd).slice(0,5);
   });
+  const outraAtiva = DATA !== hoje() && DATA !== menos1(hoje(), 1);
+  document.getElementById('btOutra').classList.toggle('on', outraAtiva);
+  const dtO = document.getElementById('dtOutra');
+  dtO.hidden = !outraAtiva;
+  dtO.value = DATA;
   const avd = document.getElementById('avisoData');
   avd.hidden = !(DATA !== hoje() && tela === 'setor' && editando());
   document.getElementById('avisoDataTxt').textContent = fmt(DATA);
@@ -861,11 +878,18 @@ function telaPCP(){
               title="${esc(r.por)}: ${esc(r.motivo)}"><span class="ic">!</span><span class="dd">recusa</span></button></td>`;
             if(r) return '<td class="c"><span class="pill p-rec"><span class="ic">!</span><span class="dd">recusa</span></span></td>';
             const e = estado(it, s);
+            const pp = porPeca(it, s), nomes = Object.keys(pp);
             const inner = e === 'ok' ? `<span class="dd">${fmtC(dataFim(it, s))}</span>`
               : e === 'sk' ? '<span class="ic">×</span>'
-              : e === 'pa' ? `<span class="ic">${baixado(it, s)}/${it.qtd}</span>`
+              : e === 'pa' ? (nomes.length
+                  ? `<span class="ic">${nomes.length}</span><span class="dd">${nomes.map(n => n.slice(0,3)).join(' ')}</span>`
+                  : `<span class="ic">${completo(it, s)}/${it.qtd}</span>`)
               : '<span class="ic">—</span>';
-            return `<td class="c"><span class="pill p-${e}">${inner}</span></td>`;
+            const temInfo = it.baixas.some(b => b.setor_id === s)
+              || it.etapas.some(x => x.setor_id === s) || !!fechado(it, s);
+            return `<td class="c">${temInfo
+              ? `<button class="pill p-${e}" data-det="${it.id}|${s}" title="Ver o que o ${SETN[s].toLowerCase()} registrou">${inner}</button>`
+              : `<span class="pill p-${e}">${inner}</span>`}</td>`;
           }).join('')}
           <td class="c"><div class="pct"><b class="mono">${p}%</b>
             <span class="bar"><i style="width:${p}%;background:${cor}"></i></span></div></td>
@@ -910,6 +934,9 @@ function telaPCP(){
     st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); atualizarSelecao(); };
   }
   document.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => modalRecusa(Number(b.dataset.rec)));
+  document.querySelectorAll('[data-det]').forEach(b => b.onclick = () => {
+    const [id, s] = b.dataset.det.split('|'); modalDetalhe(id, Number(s));
+  });
   document.querySelectorAll('[data-alt]').forEach(b => b.onclick = () => {
     sel = new Set([b.dataset.alt]); modalAlt(b.dataset.item);
   });
@@ -1232,6 +1259,51 @@ function modalCarga(){
     if(error) return erro(error);
     fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar(true);
   };
+}
+
+/* ---------- detalhe da baixa de um setor (visão do PCP) ---------- */
+function modalDetalhe(id, s){
+  const it = dados.find(x => x.id === id);
+  if(!it) return;
+  const e = estado(it, s), bxs = it.baixas.filter(b => b.setor_id === s);
+  const ets = it.etapas.filter(x => x.setor_id === s);
+  const pp = porPeca(it, s), nomes = Object.keys(pp);
+  const comp = completo(it, s), total = baixado(it, s);
+  const f = fechado(it, s);
+  const rot = {ok:'Concluído', pa:'Parcial', pe:'Pendente', sk:'Não passa por aqui'}[e];
+  abrirM(`${SETN[s]} · situação`, it.item,
+    `${it.pedido} · ${it.qtd} un · carga ${fmt(it.data_carga)}`, `
+    <section class="bl">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="pv ${e === 'ok' ? 'forte' : ''}"><div class="k">Situação</div>
+          <div class="v" style="font-size:14px">${rot}</div></div>
+        <div class="pv"><div class="k">Itens inteiros</div><div class="v">${comp}/${it.qtd}</div></div>
+        ${nomes.length ? `<div class="pv"><div class="k">Peças soltas</div>
+          <div class="v" style="font-size:14px">${nomes.map(n => `${n} ${pp[n]}`).join(' · ')}</div></div>` : ''}
+      </div>
+      ${nomes.length && e !== 'ok' ? `<span class="dica">Saíram peças avulsas: elas não fecham a linha.
+        O setor conclui quando o conjunto estiver completo.</span>` : ''}
+      ${f ? `<span class="dica">Concluído em ${fmt(f.data)} por ${esc(f.por)}.</span>` : ''}
+    </section>
+    ${ets.length ? `<section class="bl"><h5>Etapas registradas</h5>
+      ${ets.map(x => `<div class="hrow">
+        <span class="hq">${esc(nomeEtapa(x.etapa))}</span>
+        <span class="mono" style="font-size:12.5px">${fmt(x.data)}</span>
+        <span style="font-size:11.5px;opacity:.6">${esc(x.por) || ''}${x.lote_id ? ' · lote' : ''}</span>
+      </div>`).join('')}</section>` : ''}
+    <section class="bl"><h5>Entregas registradas</h5>
+      ${bxs.length ? bxs.map(b => `<div class="hrow">
+        <span class="hq">${b.qtd} ${esc(b.peca) || 'un'}</span>
+        <span class="mono" style="font-size:12.5px">${fmt(b.data)}</span>
+        <span style="font-size:11.5px;opacity:.6">${esc(b.por)}${b.obs ? ' · ' + esc(b.obs) : ''}</span>
+      </div>`).join('') : '<span class="dica" style="margin:0">Nenhuma ainda.</span>'}
+    </section>
+    <section class="bl">
+      <span class="dica" style="margin:0">Quem registra é o ${SETN[s].toLowerCase()} na tela dele.
+        Aqui o PCP acompanha, não altera.</span>
+      <div class="acoes"><button class="btn" id="dFechar">Fechar</button></div>
+    </section>`);
+  document.getElementById('dFechar').onclick = fecharM;
 }
 
 /* ---------- importação da planilha ---------- */
