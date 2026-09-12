@@ -78,7 +78,13 @@ header{background:var(--bg2);border-bottom:2px solid var(--border2);display:flex
 .quem b{font-family:'JetBrains Mono',monospace;font-size:11px;display:block}
 .abas{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rad);padding:3px}
 .aba{padding:7px 13px;border:0;background:none;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;}
-.aba.on{background:var(--bg5);}
+.aba.on{background:var(--bg5)}
+.abasel{border:0;background:var(--bg5);border-radius:6px;padding:7px 9px;font-size:13px;
+  font-weight:700;cursor:pointer;font-family:inherit;max-width:150px;
+  border-left:1px solid var(--border2);margin-left:2px}
+.abasel[hidden]{display:none}
+.abasel:hover{background:var(--bg4)}
+.abasel option{background:var(--bg2)}
 .mini{padding:8px 11px;font-size:13px;font-weight:700;background:var(--bg3);
   border:1px solid var(--border2);border-radius:var(--rad);cursor:pointer}
 .mini:hover{border-color:var(--acc)}
@@ -332,10 +338,10 @@ th[data-col]:hover{}
   <div class="hr">
     <div class="abas" id="abas" hidden>
       <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
-      <button class="aba" data-t="setor">RQ 200 · Setor</button>
+      <button class="aba" data-t="setor">RQ 200</button>
+      <select class="abasel" id="selSetor" hidden></select>
     </div>
     <span class="quem" id="quem"></span>
-    <select class="sel" id="selSetor" hidden></select>
     <div class="dataseg" id="dataseg" hidden>
       <button data-dd="0" class="on">Hoje <i></i></button>
       <button data-dd="1">Ontem <i></i></button>
@@ -852,7 +858,8 @@ function pintar(){
   document.querySelectorAll('.aba').forEach(a => {
     a.classList.toggle('on', a.dataset.t === tela);
     if(a.dataset.t === 'setor')
-      a.textContent = 'RQ 200 · ' + SETN[perfil.papel === 'setor' ? perfil.setor_id : setorOlhado];
+      a.textContent = perfil.papel === 'setor'
+        ? 'RQ 200 · ' + SETN[perfil.setor_id] : 'RQ 200';
   });
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
     ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[setorDaTela()]}</em>`;
