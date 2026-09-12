@@ -168,6 +168,28 @@ button.pill:hover{filter:brightness(1.3)}
   border-radius:5px;font:inherit;border-bottom:1px solid transparent}
 .itbt:hover{background:var(--bg3);border-bottom-color:var(--acc)}
 .itbt .it,.itbt .cp,.itbt .obs{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:11px;margin-bottom:16px}
+.kpi{border:2px solid var(--border2);border-radius:var(--rad-lg);padding:14px 15px;background:var(--bg2);
+  cursor:pointer;text-align:left;font-family:inherit;display:block;width:100%}
+.kpi:hover{background:var(--bg3)}
+.kpi.grave{border-color:var(--red);background:var(--red-bg)}
+.kpi.risco{border-color:var(--amber);background:var(--amber-bg)}
+.kpi.bom{border-color:var(--green);background:var(--green-bg)}
+.kpi .n{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;line-height:1}
+.kpi .t{font-size:12.5px;font-weight:700;margin-top:6px;line-height:1.3}
+.kpi .s{font-size:11px;font-weight:500;margin-top:4px;line-height:1.35}
+.bloco{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);
+  padding:15px;margin-bottom:16px}
+.bloco h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:12px}
+.bloco h3 small{font-weight:500;letter-spacing:0;text-transform:none;font-size:11.5px;margin-left:8px}
+.linhabar{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)}
+.linhabar:last-child{border-bottom:0}
+.lb-n{font-size:13px;font-weight:700;min-width:118px}
+.lb-b{flex:1;height:9px;background:var(--bg4);border-radius:5px;overflow:hidden;
+  border:1px solid var(--border2);min-width:70px}
+.lb-b i{display:block;height:100%}
+.lb-v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;min-width:44px;text-align:right}
+.lb-x{font-size:11.5px;font-weight:500;min-width:150px}
 .grade{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
 .gc{border:1.5px solid var(--border2);border-radius:var(--rad);padding:8px 6px;text-align:center;background:var(--bg3)}
 .gc .s{font-size:10px;font-weight:800;letter-spacing:.06em;font-family:'JetBrains Mono',monospace}
@@ -339,6 +361,7 @@ th[data-col]:hover{}
     <div class="abas" id="abas" hidden>
       <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
       <button class="aba" data-t="setor">Setor</button>
+      <button class="aba" data-t="gerencia" hidden>Gerência</button>
       <button class="aba" data-t="admin" hidden>Usuários</button>
       <select class="abasel" id="selSetor" hidden></select>
     </div>
@@ -610,8 +633,9 @@ async function iniciar(){
     `${esc(p.usuario || p.nome)}<b>${p.papel === 'setor' ? SETN[p.setor_id] : p.papel.toUpperCase()}</b>`;
   tela = p.papel === 'setor' ? 'setor' : 'pcp';
   usuarios = [];
-  document.getElementById('abas').hidden = !['pcp','admin'].includes(p.papel);
+  document.getElementById('abas').hidden = p.papel === 'setor';
   document.querySelector('.aba[data-t="admin"]').hidden = p.papel !== 'admin';
+  document.querySelector('.aba[data-t="gerencia"]').hidden = p.papel === 'setor';
   document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
     tela = a.dataset.t; sel.clear(); edicao = false; barraSig = ''; fecharM(); pintar();
   });
@@ -743,6 +767,9 @@ function filtrar(){
     if(filtro === 'ok') l = l.filter(i => i.data_carga);
     if(filtro === 'alt') l = l.filter(i => altsDe(i).length);
     if(filtro === 'rec') l = l.filter(i => recusas.some(r => r.item_id === i.id && r.estado === 'pendente'));
+    if(filtro === 'venc') l = l.filter(i => i.data_carga && dias(i.data_carga) < 0 && pronto(i) < 100);
+    if(filtro === 'risco') l = l.filter(i => { const d = dias(i.data_carga); return d !== null && d >= 0 && d <= 7 && pronto(i) < 100; });
+    if(filtro === 'parado') l = l.filter(i => SETN.some((_, s) => paradoNoCorte(i, s)));
   }
   if(F.cliente) l = l.filter(i => (i.cliente || '') === F.cliente);
   if(F.classe) l = l.filter(i => (i.classificacao || '') === F.classe);
@@ -820,13 +847,14 @@ function atualizarSelecao(){
 }
 
 function pintar(){
+  const semFiltros = tela === 'admin' || tela === 'gerencia';
   const be = document.getElementById('btEditar');
   be.hidden = !podeEscrever();
   be.textContent = edicao ? '✓ Editando — sair' : '✎ Editar';
   be.classList.toggle('editando', edicao);
   const fx = document.getElementById('faixa');
   fx.classList.toggle('on', edicao);
-  fx.hidden = tela === 'admin';
+  fx.hidden = semFiltros;
   fx.textContent = !podeEscrever()
     ? (tela === 'pcp'
         ? 'Somente leitura. Quem define pedido e carga é o PCP.'
@@ -842,8 +870,8 @@ function pintar(){
   document.getElementById('main2').classList.toggle('compainel', painel && tela === 'pcp');
   const ss = document.getElementById('selSetor');
   ss.hidden = !(tela === 'setor' && perfil.papel !== 'setor');
-  document.getElementById('barraTopo').hidden = tela === 'admin';
-  document.getElementById('barraChips').hidden = tela === 'admin';
+  document.getElementById('barraTopo').hidden = semFiltros;
+  document.getElementById('barraChips').hidden = semFiltros;
   if(!ss.hidden){
     const atual = String(setorOlhado);
     if(ss.dataset.pronto !== '1'){
@@ -878,11 +906,12 @@ function pintar(){
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
     ? 'RQ 213 <em>· PCP</em>'
     : tela === 'admin' ? 'Usuários <em>· permissões e acesso</em>'
+    : tela === 'gerencia' ? 'Gerência <em>· indicadores do PCP</em>'
     : `${SETN[setorDaTela()]} <em>· baixa de produção</em>`;
   const cx = document.querySelector('.ts');
   const rx = cx ? cx.scrollLeft : 0, ry = cx ? cx.scrollTop : 0;
   const janela = window.scrollY;
-  tela === 'admin' ? telaAdmin() : tela === 'pcp' ? telaPCP() : telaSetor();
+  tela === 'admin' ? telaAdmin() : tela === 'gerencia' ? telaGerencia() : tela === 'pcp' ? telaPCP() : telaSetor();
   const cx2 = document.querySelector('.ts');
   if(cx2){ cx2.scrollLeft = rx; cx2.scrollTop = ry; }
   try { window.scrollTo(0, janela); } catch(_){}
@@ -960,7 +989,10 @@ function telaPCP(){
       <button class="chip sem ${filtro === 'sem' ? 'on' : ''}" data-f="sem"><span class="d"></span>Sem carga ${nSem}</button>
       <button class="chip ok ${filtro === 'ok' ? 'on' : ''}" data-f="ok"><span class="d"></span>Com carga ${dados.length - nSem}</button>
       <button class="chip fila ${filtro === 'alt' ? 'on' : ''}" data-f="alt"><span class="d"></span>Com alteração ${dados.filter(i => altsDe(i).length).length}</button>
-      ${nRec ? `<button class="chip rec ${filtro === 'rec' ? 'on' : ''}" data-f="rec"><span class="d"></span>Recusas de roteiro ${nRec}</button>` : ''}`,
+      ${nRec ? `<button class="chip rec ${filtro === 'rec' ? 'on' : ''}" data-f="rec"><span class="d"></span>Recusas de roteiro ${nRec}</button>` : ''}
+      ${['venc','risco','parado'].includes(filtro)
+        ? `<button class="chip rec on" data-f="${filtro}"><span class="d"></span>${
+            {venc:'Carga vencida', risco:'Saem em até 7 dias', parado:'Parados na produção'}[filtro]}</button>` : ''}`,
       [{k:'cliente', lbl:'Todos os clientes', get:i => i.cliente},
        {k:'classe', lbl:'Todas as classificações', get:i => i.classificacao},
        {k:'familia', lbl:'Todas as famílias', get:i => i.familia}]) +
@@ -1369,6 +1401,101 @@ function modalCarga(){
     if(error) return erro(error);
     fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar(true);
   };
+}
+
+/* ================= GERÊNCIA · INDICADORES ================= */
+function telaGerencia(){
+  const abertos = dados.filter(i => !i.cancelado && pronto(i) < 100);
+  const comCarga = abertos.filter(i => i.data_carga);
+  const vencidas = comCarga.filter(i => dias(i.data_carga) < 0);
+  const risco = comCarga.filter(i => { const d = dias(i.data_carga); return d >= 0 && d <= 7; });
+  const semCarga = dados.filter(i => !i.data_carga && !i.cancelado);
+  const parados = dados.filter(i => SETN.some((_, s) => paradoNoCorte(i, s)));
+  const recPend = recusas.filter(r => r.estado === 'pendente');
+  const cancel = alteracoes.filter(a => a.tipo === 'cancel');
+
+  const kpi = (cls, n, t, s, ir) =>
+    `<button class="kpi ${cls}" data-ir="${ir || ''}"><div class="n">${n}</div>
+      <div class="t">${t}</div><div class="s">${s}</div></button>`;
+
+  // por setor: quantos itens esperando e há quanto tempo o mais antigo espera
+  const porSetor = SETN.map((nome, s) => {
+    const passam = dados.filter(i => passa(i, s) && !i.cancelado);
+    const pend = passam.filter(i => estado(i, s) !== 'ok');
+    const feitos = passam.length - pend.length;
+    const vencPend = pend.filter(i => i.data_carga && dias(i.data_carga) < 0).length;
+    const idades = pend.map(i => i.data_kanban ? -dias(i.data_kanban) : null).filter(x => x !== null);
+    return {s, nome, total:passam.length, pend: pend.length, feitos,
+      pc: passam.length ? Math.round(feitos / passam.length * 100) : 100,
+      venc: vencPend, maisVelho: idades.length ? Math.max(...idades) : null};
+  }).filter(x => x.total);
+
+  // próximas cargas
+  const mapa = new Map();
+  dados.filter(i => i.data_carga && !i.cancelado).forEach(i => {
+    const k = i.carga + '|' + i.data_carga;
+    if(!mapa.has(k)) mapa.set(k, {carga:i.carga, data:i.data_carga, itens:[]});
+    mapa.get(k).itens.push(i);
+  });
+  const cargas = [...mapa.values()].map(c => {
+    const okc = c.itens.filter(i => pronto(i) === 100).length;
+    return Object.assign(c, {ok:okc, pc: Math.round(okc / c.itens.length * 100),
+      falta: c.itens.length - okc, d: dias(c.data)});
+  }).sort((a, b) => a.data.localeCompare(b.data)).slice(0, 10);
+
+  const cor = p => p === 100 ? 'var(--green)' : p >= 60 ? 'var(--amber)' : 'var(--red)';
+
+  document.getElementById('conteudo').innerHTML = `
+    <div class="kpis">
+      ${kpi(vencidas.length ? 'grave' : 'bom', vencidas.length, 'Itens com carga vencida',
+        vencidas.length ? `de ${new Set(vencidas.map(i => i.pedido)).size} pedidos, ainda em produção` : 'nada atrasado', 'venc')}
+      ${kpi(risco.length ? 'risco' : 'bom', risco.length, 'Saem em até 7 dias',
+        risco.length ? 'e não passaram por todos os setores' : 'tudo pronto para as próximas cargas', 'risco')}
+      ${kpi(semCarga.length ? 'risco' : 'bom', semCarga.length, 'Esperando carga',
+        `${new Set(semCarga.map(i => i.pedido)).size} pedidos sem data definida`, 'sem')}
+      ${kpi(parados.length ? 'grave' : '', parados.length, 'Parados na produção',
+        `liberados há mais de ${LIM_CORTE} dias sem concluir`, 'parado')}
+      ${kpi(recPend.length ? 'risco' : '', recPend.length, 'Recusas de roteiro',
+        'setores dizendo que o item não passa lá', 'rec')}
+      ${kpi(cancel.length ? 'grave' : '', cancel.length, 'Cancelamentos ativos',
+        'pedidos com ordem de parar', 'alt')}
+    </div>
+
+    <div class="bloco">
+      <h3>Onde está parado <small>itens que ainda não passaram, por setor</small></h3>
+      ${porSetor.sort((a, b) => b.pend - a.pend).map(x => `<div class="linhabar">
+        <span class="lb-n">${x.nome}</span>
+        <span class="lb-b"><i style="width:${x.pc}%;background:${cor(x.pc)}"></i></span>
+        <span class="lb-v">${x.pc}%</span>
+        <span class="lb-x">${x.pend} de ${x.total} esperando${x.venc ? ` · ${x.venc} com carga vencida` : ''}</span>
+      </div>`).join('') || '<span class="dica">Sem itens em produção.</span>'}
+    </div>
+
+    <div class="bloco">
+      <h3>Próximas cargas <small>quanto de cada uma já está pronto</small></h3>
+      ${cargas.map(c => `<div class="linhabar">
+        <span class="lb-n">${esc(c.carga)}</span>
+        <span class="lb-b"><i style="width:${c.pc}%;background:${cor(c.pc)}"></i></span>
+        <span class="lb-v">${c.pc}%</span>
+        <span class="lb-x">${fmt(c.data)} · ${c.d < 0 ? `venceu há ${-c.d} d` : c.d === 0 ? 'sai hoje' : `em ${c.d} d`}${c.falta ? ` · faltam ${c.falta}` : ''}</span>
+      </div>`).join('') || '<span class="dica">Nenhuma carga definida ainda.</span>'}
+    </div>
+
+    <div class="bloco">
+      <h3>Fila mais antiga <small>os dez itens em aberto que mais tempo esperam</small></h3>
+      ${abertos.filter(i => i.data_kanban).sort((a, b) => a.data_kanban.localeCompare(b.data_kanban))
+        .slice(0, 10).map(i => `<div class="linhabar">
+          <span class="lb-v" style="min-width:56px">${-dias(i.data_kanban)} d</span>
+          <span class="lb-n" style="flex:1;min-width:0">${esc(i.item)}</span>
+          <span class="lb-x">${esc(i.pedido)} · ${pronto(i)}% · ${i.carga ? esc(i.carga) : 'sem carga'}</span>
+        </div>`).join('') || '<span class="dica">Nada em aberto.</span>'}
+    </div>`;
+
+  document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
+    const f = b.dataset.ir;
+    if(!f) return;
+    tela = 'pcp'; filtro = f; sel.clear(); pintar();
+  });
 }
 
 /* ================= ADMINISTRAÇÃO DE USUÁRIOS ================= */
