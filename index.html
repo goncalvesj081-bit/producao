@@ -1417,7 +1417,7 @@ function modalCarga(){
 }
 
 /* ================= GERÊNCIA · INDICADORES ================= */
-let gSetor = 'todos', gDias = 30, gCache = null;
+let gSetor = 'todos', gDias = 30, gCache = null, gModo = 'mov';
 
 const diaDe = s => s ? s.slice(0,10) : null;
 const somaDias = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n);
@@ -1441,15 +1441,51 @@ function telaGerencia(){
   const noPeriodo = b => b.data >= de && b.data <= ate;
   const doSetor = b => gSetor === 'todos' || b.setor_id === Number(gSetor);
 
-  // ---------- peças baixadas por dia ----------
+  // ---------- contagens por dia ----------
+  // Três coisas diferentes, que antes eu somava juntas:
+  //   mov   = peças que o setor entregou (o mesmo produto conta em cada setor)
+  //   final = produtos que a EMBALAGEM concluiu (produção de verdade)
+  //   env   = produtos que a EXPEDIÇÃO concluiu (saiu da fábrica)
+  // Baixa de peça avulsa (encosto, base) NÃO entra: ela é pedaço, não produto.
   const porDia = {};
   for(let i = 0; i < gDias; i++) porDia[somaDias(de, i)] = 0;
-  let totalPecas = 0, totalRegistros = 0;
-  dados.forEach(it => it.baixas.forEach(b => {
-    if(!doSetor(b) || !noPeriodo(b)) return;
-    porDia[b.data] = (porDia[b.data] || 0) + b.qtd;
-    totalPecas += b.qtd; totalRegistros++;
-  }));
+  let totalPecas = 0, totalRegistros = 0, avulsas = 0;
+
+  function conclusaoEm(it, s){
+    const f = fechado(it, s);
+    if(f) return f.data;
+    if(completo(it, s) < it.qtd) return null;
+    const ds = it.baixas.filter(b => b.setor_id === s && !b.peca).map(b => b.data).sort();
+    return ds.length ? ds[ds.length-1] : null;
+  }
+
+  if(gModo === 'mov'){
+    dados.forEach(it => it.baixas.forEach(b => {
+      if(!doSetor(b) || !noPeriodo(b)) return;
+      if(b.peca){ if(doSetor(b)) avulsas += b.qtd; return; }
+      porDia[b.data] = (porDia[b.data] || 0) + b.qtd;
+      totalPecas += b.qtd; totalRegistros++;
+    }));
+  } else {
+    const alvo = gModo === 'final' ? 8 : 9;
+    dados.forEach(it => {
+      if(!passa(it, alvo)) return;
+      const dConc = conclusaoEm(it, alvo);
+      if(!dConc || dConc < de || dConc > ate) return;
+      porDia[dConc] = (porDia[dConc] || 0) + it.qtd;
+      totalPecas += it.qtd; totalRegistros++;
+    });
+  }
+
+  // totais de produção, independentes do filtro de setor
+  const contaConcluidos = alvo => dados.filter(it => {
+    if(!passa(it, alvo)) return false;
+    const dC = conclusaoEm(it, alvo);
+    return dC && dC >= de && dC <= ate;
+  });
+  const finalizados = contaConcluidos(8), enviados = contaConcluidos(9);
+  const pecasFin = finalizados.reduce((a, i) => a + i.qtd, 0);
+  const pecasEnv = enviados.reduce((a, i) => a + i.qtd, 0);
   const diasArr = Object.keys(porDia).sort();
   const maxDia = Math.max(1, ...diasArr.map(d => porDia[d]));
   const comMov = diasArr.filter(d => porDia[d] > 0);
@@ -1490,8 +1526,10 @@ function telaGerencia(){
   }).filter(x => x.n);
   const maxSeg = Math.max(1, ...segurou.map(x => x.med || 0));
 
-  const nomeSetor = gSetor === 'todos' ? 'todos os setores' : SETN[gSetor];
-  gCache = {de, ate, tempos, faixas, nomeSetor};
+  const nomeSetor = gModo === 'final' ? 'concluídos na embalagem'
+    : gModo === 'env' ? 'concluídos na expedição'
+    : gSetor === 'todos' ? 'todos os setores' : SETN[gSetor];
+  gCache = {de, ate, tempos, faixas, nomeSetor, modo:gModo};
 
   // ---------- por família ----------
   const fams = {};
@@ -1508,7 +1546,11 @@ function telaGerencia(){
 
   document.getElementById('conteudo').innerHTML = `
     <div class="linha" style="gap:8px">
-      <select class="fsel" id="gSetor" style="max-width:190px">
+      <div class="dataseg" style="position:static">
+        ${[['mov','Movimento no setor'],['final','Produtos finalizados'],['env','Produtos enviados']]
+          .map(([k, r]) => `<button data-gm="${k}" class="${gModo === k ? 'on' : ''}">${r}</button>`).join('')}
+      </div>
+      <select class="fsel" id="gSetor" style="max-width:190px" ${gModo === 'mov' ? '' : 'disabled'}>
         <option value="todos">Todos os setores</option>
         ${SETN.map((n, s) => `<option value="${s}"${String(gSetor) === String(s) ? ' selected' : ''}>${n}</option>`).join('')}
       </select>
@@ -1519,22 +1561,30 @@ function telaGerencia(){
     </div>
 
     <div class="kpis">
+      <button class="kpi bom" data-mod="final"><div class="n">${pecasFin}</div>
+        <div class="t">Produtos finalizados</div>
+        <div class="s">${finalizados.length} itens concluídos na embalagem</div></button>
+      <button class="kpi" data-mod="env"><div class="n">${pecasEnv}</div>
+        <div class="t">Produtos enviados</div>
+        <div class="s">${enviados.length} itens concluídos na expedição</div></button>
       <div class="kpi" style="cursor:default"><div class="n">${totalPecas}</div>
-        <div class="t">Peças baixadas</div><div class="s">em ${nomeSetor}, no período</div></div>
+        <div class="t">${gModo === 'mov' ? 'Peças entregues' : 'No período'}</div>
+        <div class="s">${nomeSetor}</div></div>
       <div class="kpi" style="cursor:default"><div class="n">${media}</div>
-        <div class="t">Média por dia útil</div><div class="s">${comMov.length} dias com movimento</div></div>
+        <div class="t">Média por dia com movimento</div><div class="s">${comMov.length} dias de ${gDias}</div></div>
       <div class="kpi" style="cursor:default"><div class="n">${hojePecas}</div>
-        <div class="t">Hoje</div><div class="s">ontem foram ${ontemPecas}</div></div>
-      <div class="kpi" style="cursor:default"><div class="n">${melhor ? porDia[melhor] : 0}</div>
-        <div class="t">Melhor dia</div><div class="s">${melhor ? fmt(melhor) : '—'}</div></div>
+        <div class="t">Hoje</div><div class="s">ontem foram ${ontemPecas} · melhor dia ${melhor ? porDia[melhor] + ' em ' + fmt(melhor) : '—'}</div></div>
       <div class="kpi" style="cursor:default"><div class="n">${mediana ?? '—'}</div>
         <div class="t">Dias até a embalagem</div><div class="s">mediana de ${tempos.length} itens · média ${mediaT ?? '—'}</div></div>
-      <div class="kpi" style="cursor:default"><div class="n">${totalRegistros}</div>
-        <div class="t">Registros de baixa</div><div class="s">${totalPecas} peças em ${totalRegistros} lançamentos</div></div>
     </div>
+    ${gModo === 'mov' && avulsas ? `<div class="bloco" style="padding:11px 15px;margin-bottom:14px">
+      <span class="dica" style="margin:0"><b>${avulsas}</b> peça${avulsas > 1 ? 's' : ''} avulsa${avulsas > 1 ? 's' : ''}
+      (encosto, base, estrutura) ficaram de fora da contagem — elas são pedaço de produto, não produto pronto.
+      O item só entra na conta quando o setor conclui o conjunto.</span></div>` : ''}
 
     <div class="bloco">
-      <h3>Peças baixadas por dia <small>${nomeSetor}</small></h3>
+      <h3>${gModo === 'mov' ? 'Peças entregues por dia' : gModo === 'final' ? 'Produtos finalizados por dia' : 'Produtos enviados por dia'}
+        <small>${nomeSetor}</small></h3>
       <div class="colunas">
         ${diasArr.map(dd => `<button class="col" data-dia="${dd}" title="${fmt(dd)} · ${porDia[dd]} peças — clique para ver os itens">
           <span class="cv">${porDia[dd] || ''}</span>
@@ -1581,6 +1631,10 @@ function telaGerencia(){
       </div>`).join('') : '<span class="dica">Ainda não há itens concluídos para medir.</span>'}
     </div>`;
 
+  document.querySelectorAll('[data-gm]').forEach(b =>
+    b.onclick = () => { gModo = b.dataset.gm; pintar(); });
+  document.querySelectorAll('[data-mod]').forEach(b =>
+    b.onclick = () => { gModo = b.dataset.mod; pintar(); });
   document.querySelectorAll('[data-dia]').forEach(b => b.onclick = () => modalDia(b.dataset.dia));
   document.querySelectorAll('[data-faixa]').forEach(b => b.onclick = () => modalFaixa(Number(b.dataset.faixa)));
   document.querySelectorAll('[data-fam]').forEach(b => b.onclick = () => modalFamilia(b.dataset.fam));
@@ -1604,9 +1658,11 @@ function listaBaixas(linhas, vazio){
 
 function modalDia(dia){
   const linhas = [];
+  const alvo = gModo === 'final' ? 8 : gModo === 'env' ? 9 : null;
   dados.forEach(it => it.baixas.forEach(b => {
     if(b.data !== dia) return;
-    if(gSetor !== 'todos' && b.setor_id !== Number(gSetor)) return;
+    if(alvo !== null ? b.setor_id !== alvo
+      : (gSetor !== 'todos' && b.setor_id !== Number(gSetor))) return;
     linhas.push(Object.assign({}, b, {item:it.item, pedido:it.pedido, composicao:it.composicao}));
   }));
   linhas.sort((a, b) => a.setor_id - b.setor_id || a.item.localeCompare(b.item));
