@@ -338,7 +338,7 @@ th[data-col]:hover{}
   <div class="hr">
     <div class="abas" id="abas" hidden>
       <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
-      <button class="aba" data-t="setor">RQ 200</button>
+      <button class="aba" data-t="setor">Setor</button>
       <select class="abasel" id="selSetor" hidden></select>
     </div>
     <span class="quem" id="quem"></span>
@@ -858,11 +858,10 @@ function pintar(){
   document.querySelectorAll('.aba').forEach(a => {
     a.classList.toggle('on', a.dataset.t === tela);
     if(a.dataset.t === 'setor')
-      a.textContent = perfil.papel === 'setor'
-        ? 'RQ 200 · ' + SETN[perfil.setor_id] : 'RQ 200';
+      a.textContent = perfil.papel === 'setor' ? SETN[perfil.setor_id] : 'Setor';
   });
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
-    ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[setorDaTela()]}</em>`;
+    ? 'RQ 213 <em>· PCP</em>' : `${SETN[setorDaTela()]} <em>· baixa de produção</em>`;
   const cx = document.querySelector('.ts');
   const rx = cx ? cx.scrollLeft : 0, ry = cx ? cx.scrollTop : 0;
   const janela = window.scrollY;
