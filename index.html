@@ -339,6 +339,7 @@ th[data-col]:hover{}
     <div class="abas" id="abas" hidden>
       <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
       <button class="aba" data-t="setor">Setor</button>
+      <button class="aba" data-t="admin" hidden>Usuários</button>
       <select class="abasel" id="selSetor" hidden></select>
     </div>
     <span class="quem" id="quem"></span>
@@ -412,7 +413,7 @@ const TIPOS = {cancel:'Cancelamento',prio:'Prioridade',repro:'Reprogramação',
 let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
 let edicao = false, painel = false, verMortas = false, DATA = null;
-let ordem = [], recusas = [], lotes = [];
+let ordem = [], recusas = [], lotes = [], usuarios = [];
 let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
 const LIM_CORTE = 20;
@@ -518,8 +519,9 @@ let setorOlhado = 1;
 const setorDaTela = () => perfil.papel === 'setor' ? perfil.setor_id : setorOlhado;
 function podeEscrever(){
   if(!perfil) return false;
+  if(tela === 'admin') return perfil.papel === 'admin';
   return tela === 'pcp'
-    ? perfil.papel === 'pcp'
+    ? ['pcp','admin'].includes(perfil.papel)
     : perfil.papel === 'setor' && perfil.setor_id === setorDaTela();
 }
 const editando = () => podeEscrever() && edicao;
@@ -564,7 +566,7 @@ async function entrar(){
   if(!usuario){ b.disabled = false; b.textContent = 'Entrar';
     el.hidden = false; el.textContent = 'Informe o usuário.'; return; }
   const { error } = await sb.auth.signInWithPassword({
-    email: emailInterno(usuario),
+    email: usuario.includes('@') ? usuario.toLowerCase() : emailInterno(usuario),
     password: document.getElementById('senha').value
   });
   b.disabled = false; b.textContent = 'Entrar';
@@ -591,6 +593,11 @@ async function iniciar(){
       'Usuário sem perfil cadastrado. Ligue este usuário a um papel na tabela perfis.';
     await sb.auth.signOut(); return;
   }
+  if(p.ativo === false){
+    document.getElementById('loginErro').hidden = false;
+    document.getElementById('loginErro').textContent = 'Usuário desativado. Procure o administrador.';
+    await sb.auth.signOut(); return;
+  }
   perfil = p;
   edicao = false; sel.clear(); filtro = null; busca = ''; barraSig = ''; ordem = []; DATA = hoje();
   Object.keys(F).forEach(k => F[k] = '');
@@ -599,7 +606,9 @@ async function iniciar(){
   document.getElementById('quem').innerHTML =
     `${esc(p.usuario || p.nome)}<b>${p.papel === 'setor' ? SETN[p.setor_id] : p.papel.toUpperCase()}</b>`;
   tela = p.papel === 'setor' ? 'setor' : 'pcp';
-  document.getElementById('abas').hidden = p.papel !== 'pcp';
+  usuarios = [];
+  document.getElementById('abas').hidden = !['pcp','admin'].includes(p.papel);
+  document.querySelector('.aba[data-t="admin"]').hidden = p.papel !== 'admin';
   document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
     tela = a.dataset.t; sel.clear(); edicao = false; barraSig = ''; fecharM(); pintar();
   });
@@ -829,6 +838,8 @@ function pintar(){
   document.getElementById('main2').classList.toggle('compainel', painel && tela === 'pcp');
   const ss = document.getElementById('selSetor');
   ss.hidden = !(tela === 'setor' && perfil.papel !== 'setor');
+  document.getElementById('barraTopo').hidden = tela === 'admin';
+  document.getElementById('barraChips').hidden = tela === 'admin';
   if(!ss.hidden){
     const atual = String(setorOlhado);
     if(ss.dataset.pronto !== '1'){
@@ -865,7 +876,7 @@ function pintar(){
   const cx = document.querySelector('.ts');
   const rx = cx ? cx.scrollLeft : 0, ry = cx ? cx.scrollTop : 0;
   const janela = window.scrollY;
-  tela === 'pcp' ? telaPCP() : telaSetor();
+  tela === 'admin' ? telaAdmin() : tela === 'pcp' ? telaPCP() : telaSetor();
   const cx2 = document.querySelector('.ts');
   if(cx2){ cx2.scrollLeft = rx; cx2.scrollTop = ry; }
   try { window.scrollTo(0, janela); } catch(_){}
@@ -1351,6 +1362,162 @@ function modalCarga(){
     const { error } = await sb.from('itens').update({carga:null, data_carga:null}).in('pedido', [...sel]);
     if(error) return erro(error);
     fecharM(); sel.clear(); toast('Itens voltaram para “a definir”'); await carregar(true);
+  };
+}
+
+/* ================= ADMINISTRAÇÃO DE USUÁRIOS ================= */
+const PAPEIS = {admin:'Administrador', pcp:'PCP', setor:'Setor', leitura:'Leitura'};
+
+async function chamarAdmin(corpo){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/admin-usuarios`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`},
+    body: JSON.stringify(corpo)
+  });
+  let j = {};
+  try { j = await r.json(); } catch(_){}
+  if(!r.ok) throw new Error(j.error || `função respondeu ${r.status}. Ela já foi publicada?`);
+  return j;
+}
+
+async function carregarUsuarios(){
+  const { data, error } = await sb.from('v_usuarios').select('*').order('papel').order('usuario');
+  if(error){ erro(error); return; }
+  usuarios = data || [];
+}
+
+async function telaAdmin(){
+  if(!usuarios.length) await carregarUsuarios();
+  const eu = perfil.id;
+  document.getElementById('conteudo').innerHTML = `
+    <div class="linha">
+      <span class="cont"><b>${usuarios.length}</b> usuários · <b>${usuarios.filter(u => u.ativo).length}</b> ativos</span>
+      <button class="btn pri" id="uNovo" style="margin-left:auto">+ Novo usuário</button>
+      <button class="btn" id="uRecarregar">↻</button>
+    </div>
+    <div class="tw"><div class="ts"><table>
+      <thead><tr>
+        <th>Usuário</th><th>Nome</th><th>Papel</th><th>Setor</th>
+        <th>Situação</th><th>Último acesso</th><th>E-mail de acesso</th><th></th>
+      </tr></thead><tbody>
+      ${usuarios.map(u => `<tr>
+        <td><b class="mono">${esc(u.usuario)}</b>${u.id === eu ? ' <span class="tag t-vinc">você</span>' : ''}</td>
+        <td>${esc(u.nome)}</td>
+        <td><span class="tag ${u.papel === 'admin' ? 't-prio' : u.papel === 'pcp' ? 't-vinc' : u.papel === 'setor' ? 't-insumo' : 't-espec'}">${PAPEIS[u.papel]}</span></td>
+        <td>${esc(u.setor_nome) || '—'}</td>
+        <td><span class="tag ${u.ativo ? 't-insumo' : 't-cancel'}">${u.ativo ? 'ativo' : 'desativado'}</span></td>
+        <td class="mono" style="font-size:12px">${u.last_sign_in_at ? fmt(u.last_sign_in_at.slice(0,10)) : 'nunca entrou'}</td>
+        <td class="mono" style="font-size:11.5px">${esc(u.email) || '—'}</td>
+        <td><button class="btn" data-ued="${u.id}" style="padding:6px 11px;font-size:12.5px">Editar</button></td>
+      </tr>`).join('')}
+      </tbody></table></div></div>
+    <div class="vazio" style="padding:18px 0;text-align:left">
+      Criar usuário e trocar senha passam pela função <b>admin-usuarios</b> no servidor,
+      onde a chave de serviço fica guardada. Papel, setor e ativação são gravados direto na tabela de perfis.
+    </div>`;
+  document.getElementById('uNovo').onclick = () => modalUsuario(null);
+  document.getElementById('uRecarregar').onclick = async () => { await carregarUsuarios(); pintar(); };
+  document.querySelectorAll('[data-ued]').forEach(b =>
+    b.onclick = () => modalUsuario(usuarios.find(u => u.id === b.dataset.ued)));
+}
+
+function modalUsuario(u){
+  const novo = !u;
+  const eu = perfil.id;
+  abrirM('Usuários', novo ? 'Novo usuário' : esc(u.usuario),
+    novo ? 'Ele entra digitando o usuário e a senha' : esc(u.email || ''), `
+    <section class="bl"><h5>Dados</h5>
+      <div class="g2">
+        <input id="u_usuario" placeholder="Usuário — ex: ANA PAULA" value="${novo ? '' : esc(u.usuario)}" ${novo ? '' : 'disabled'}>
+        <input id="u_nome" placeholder="Nome" value="${novo ? '' : esc(u.nome)}">
+        <select id="u_papel">
+          ${Object.entries(PAPEIS).map(([k, v]) => `<option value="${k}"${!novo && u.papel === k ? ' selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <select id="u_setor">
+          <option value="">— sem setor —</option>
+          ${SETN.map((n, s) => `<option value="${s}"${!novo && u.setor_id === s ? ' selected' : ''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <span class="dica" id="u_email"></span>
+    </section>
+    <section class="bl"><h5>${novo ? 'Senha' : 'Trocar a senha'}</h5>
+      <div class="g2"><input type="text" id="u_senha" class="full" placeholder="${novo ? 'senha inicial' : 'deixe em branco para não mexer'}"></div>
+      <span class="dica">Não existe recuperação por e-mail: quem esquecer a senha, você troca aqui.</span>
+    </section>
+    ${novo ? '' : `<section class="bl"><h5>Acesso</h5>
+      <div class="chips2">
+        <button type="button" class="c2 ${u.ativo ? 'on' : ''}" id="u_ativo">${u.ativo ? 'Ativo' : 'Desativado'}</button>
+      </div>
+      <span class="dica">Desativado continua no sistema e no histórico, mas não consegue entrar nem gravar nada.</span>
+    </section>`}
+    <div id="u_alerta"></div>
+    <div class="acoes">
+      <button class="btn pri" id="u_salvar">${novo ? 'Criar usuário' : 'Salvar'}</button>
+      ${novo || u.id === eu ? '' : '<button class="btn vermelha" id="u_apagar">Apagar</button>'}
+      <button class="btn" id="u_fechar">Cancelar</button>
+    </div>`);
+
+  let ativo = novo ? true : u.ativo;
+  const bAtivo = document.getElementById('u_ativo');
+  if(bAtivo) bAtivo.onclick = () => {
+    ativo = !ativo;
+    bAtivo.classList.toggle('on', ativo);
+    bAtivo.textContent = ativo ? 'Ativo' : 'Desativado';
+  };
+  const mostrarEmail = () => {
+    const v = document.getElementById('u_usuario').value.trim();
+    document.getElementById('u_email').textContent = v
+      ? 'Entra como: ' + (v.includes('@') ? v.toLowerCase() : emailInterno(v)) : '';
+  };
+  document.getElementById('u_usuario').oninput = mostrarEmail;
+  mostrarEmail();
+  document.getElementById('u_fechar').onclick = fecharM;
+
+  document.getElementById('u_salvar').onclick = async () => {
+    const b = document.getElementById('u_salvar');
+    const v = id => document.getElementById(id).value.trim();
+    const papel = v('u_papel'), setor = v('u_setor');
+    if(papel === 'setor' && setor === '')
+      return toast('Perfil de setor precisa de um setor', true);
+    b.disabled = true; b.textContent = 'Salvando…';
+    try{
+      if(novo){
+        if(!v('u_usuario') || !v('u_senha')) throw new Error('Informe usuário e senha');
+        await chamarAdmin({acao:'criar', usuario:v('u_usuario'), nome:v('u_nome') || v('u_usuario'),
+          senha:v('u_senha'), papel, setor_id: papel === 'setor' ? Number(setor) : null});
+        toast(`${v('u_usuario').toUpperCase()} criado`);
+      } else {
+        const { error } = await sb.from('perfis').update({
+          nome:v('u_nome'), papel, setor_id: papel === 'setor' ? Number(setor) : null, ativo
+        }).eq('id', u.id);
+        if(error) throw error;
+        if(v('u_senha')) await chamarAdmin({acao:'senha', id:u.id, senha:v('u_senha')});
+        toast(`${u.usuario} atualizado`);
+      }
+      fecharM(); await carregarUsuarios(); pintar();
+    }catch(e){
+      b.disabled = false; b.textContent = novo ? 'Criar usuário' : 'Salvar';
+      document.getElementById('u_alerta').innerHTML =
+        `<div class="alerta grave">${esc(e.message || e)}</div>`;
+    }
+  };
+  const bA = document.getElementById('u_apagar');
+  if(bA) bA.onclick = async () => {
+    document.getElementById('u_alerta').innerHTML =
+      `<div class="alerta grave">Apagar remove o acesso de vez. O que ${esc(u.usuario)} já registrou continua no histórico.
+       <div class="acoes" style="margin-top:10px">
+         <button class="btn vermelha" id="u_apagar2">Apagar mesmo assim</button></div></div>`;
+    document.getElementById('u_apagar2').onclick = async () => {
+      try{
+        await chamarAdmin({acao:'apagar', id:u.id});
+        toast(`${u.usuario} apagado`);
+        fecharM(); await carregarUsuarios(); pintar();
+      }catch(e){
+        document.getElementById('u_alerta').innerHTML =
+          `<div class="alerta grave">${esc(e.message || e)}</div>`;
+      }
+    };
   };
 }
 
