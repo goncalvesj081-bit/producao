@@ -177,6 +177,10 @@ button.pill:hover{filter:brightness(1.3)}
   border:1px solid var(--acc)}
 .col:hover .cb{background:var(--green);border-color:var(--green)}
 .cl{font-family:'JetBrains Mono',monospace;font-size:9px;margin-top:4px}
+button.col{background:none;border:0;cursor:pointer;padding:0;font-family:inherit}
+button.col:hover .cb{background:var(--green);border-color:var(--green)}
+.linhabar.cliq{cursor:pointer;border-radius:6px}
+.linhabar.cliq:hover{background:var(--bg3)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:11px;margin-bottom:16px}
 .kpi{border:2px solid var(--border2);border-radius:var(--rad-lg);padding:14px 15px;background:var(--bg2);
   cursor:pointer;text-align:left;font-family:inherit;display:block;width:100%}
@@ -1413,7 +1417,7 @@ function modalCarga(){
 }
 
 /* ================= GERÊNCIA · INDICADORES ================= */
-let gSetor = 'todos', gDias = 30;
+let gSetor = 'todos', gDias = 30, gCache = null;
 
 const diaDe = s => s ? s.slice(0,10) : null;
 const somaDias = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n);
@@ -1487,6 +1491,20 @@ function telaGerencia(){
   const maxSeg = Math.max(1, ...segurou.map(x => x.med || 0));
 
   const nomeSetor = gSetor === 'todos' ? 'todos os setores' : SETN[gSetor];
+  gCache = {de, ate, tempos, faixas, nomeSetor};
+
+  // ---------- por família ----------
+  const fams = {};
+  tempos.forEach(x => {
+    const f = x.it.familia || (x.it.item || '').split(' ')[0] || '—';
+    (fams[f] = fams[f] || []).push(x);
+  });
+  const familias = Object.entries(fams).map(([f, arr]) => {
+    const ds = arr.map(x => x.d).sort((a, b) => a - b);
+    return {f, n:arr.length, med: ds[Math.floor(ds.length / 2)],
+      pior: ds[ds.length-1], pecas: arr.reduce((a, x) => a + x.it.qtd, 0)};
+  }).sort((a, b) => b.med - a.med);
+  const maxFam = Math.max(1, ...familias.map(x => x.med));
 
   document.getElementById('conteudo').innerHTML = `
     <div class="linha" style="gap:8px">
@@ -1518,18 +1536,18 @@ function telaGerencia(){
     <div class="bloco">
       <h3>Peças baixadas por dia <small>${nomeSetor}</small></h3>
       <div class="colunas">
-        ${diasArr.map(dd => `<div class="col" title="${fmt(dd)} · ${porDia[dd]} peças">
+        ${diasArr.map(dd => `<button class="col" data-dia="${dd}" title="${fmt(dd)} · ${porDia[dd]} peças — clique para ver os itens">
           <span class="cv">${porDia[dd] || ''}</span>
           <span class="cb" style="height:${Math.round(porDia[dd] / maxDia * 100)}%"></span>
           <span class="cl">${dd.slice(8,10)}</span>
-        </div>`).join('')}
+        </button>`).join('')}
       </div>
       ${totalPecas ? '' : '<span class="dica">Nenhuma baixa nesse período.</span>'}
     </div>
 
     <div class="bloco">
       <h3>Do primeiro setor até a embalagem <small>${tempos.length} itens que chegaram ao fim</small></h3>
-      ${tempos.length ? dist.map(x => `<div class="linhabar">
+      ${tempos.length ? dist.map((x, ix) => `<div class="linhabar cliq" data-faixa="${ix}">
         <span class="lb-n">${x.r}</span>
         <span class="lb-b"><i style="width:${Math.round(x.n / maxDist * 100)}%;background:var(--acc)"></i></span>
         <span class="lb-v">${x.n}</span>
@@ -1544,8 +1562,18 @@ function telaGerencia(){
     </div>
 
     <div class="bloco">
+      <h3>Qual família demora mais <small>do primeiro setor até a embalagem</small></h3>
+      ${familias.length ? familias.map(x => `<div class="linhabar cliq" data-fam="${esc(x.f)}">
+        <span class="lb-n">${esc(x.f)}</span>
+        <span class="lb-b"><i style="width:${Math.round(x.med / maxFam * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
+        <span class="lb-v">${x.med} d</span>
+        <span class="lb-x">${x.n} itens · ${x.pecas} peças · pior ${x.pior} d</span>
+      </div>`).join('') : '<span class="dica">Sem itens concluídos para comparar.</span>'}
+    </div>
+
+    <div class="bloco">
       <h3>Quanto cada setor segurou <small>mediana de dias entre receber e entregar</small></h3>
-      ${segurou.length ? segurou.sort((a, b) => (b.med || 0) - (a.med || 0)).map(x => `<div class="linhabar">
+      ${segurou.length ? segurou.sort((a, b) => (b.med || 0) - (a.med || 0)).map(x => `<div class="linhabar cliq" data-seg="${x.s}">
         <span class="lb-n">${x.nome}</span>
         <span class="lb-b"><i style="width:${Math.round((x.med || 0) / maxSeg * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
         <span class="lb-v">${x.med} d</span>
@@ -1553,9 +1581,94 @@ function telaGerencia(){
       </div>`).join('') : '<span class="dica">Ainda não há itens concluídos para medir.</span>'}
     </div>`;
 
+  document.querySelectorAll('[data-dia]').forEach(b => b.onclick = () => modalDia(b.dataset.dia));
+  document.querySelectorAll('[data-faixa]').forEach(b => b.onclick = () => modalFaixa(Number(b.dataset.faixa)));
+  document.querySelectorAll('[data-fam]').forEach(b => b.onclick = () => modalFamilia(b.dataset.fam));
+  document.querySelectorAll('[data-seg]').forEach(b => b.onclick = () => modalSegurou(Number(b.dataset.seg)));
   document.getElementById('gSetor').onchange = e => { gSetor = e.target.value; pintar(); };
   document.querySelectorAll('[data-gd]').forEach(b =>
     b.onclick = () => { gDias = Number(b.dataset.gd); pintar(); });
+}
+
+/* ---------- detalhes da gerência ---------- */
+function listaBaixas(linhas, vazio){
+  if(!linhas.length) return `<span class="dica" style="margin:0">${vazio}</span>`;
+  return linhas.map(l => `<div class="hrow">
+    <span class="hq">${l.qtd} ${esc(l.peca) || 'un'}</span>
+    <span class="mono" style="font-size:12px;min-width:52px">${SET[l.setor_id]}</span>
+    <span style="flex:1;min-width:0;font-size:12.5px">${esc(l.item)}
+      <span style="display:block;font-size:10.5px;font-family:'JetBrains Mono',monospace">${esc(l.pedido)}${l.composicao ? ' · ' + esc(l.composicao) : ''}</span></span>
+    <span style="font-size:11.5px;min-width:76px;text-align:right">${esc(l.por)}</span>
+  </div>`).join('');
+}
+
+function modalDia(dia){
+  const linhas = [];
+  dados.forEach(it => it.baixas.forEach(b => {
+    if(b.data !== dia) return;
+    if(gSetor !== 'todos' && b.setor_id !== Number(gSetor)) return;
+    linhas.push(Object.assign({}, b, {item:it.item, pedido:it.pedido, composicao:it.composicao}));
+  }));
+  linhas.sort((a, b) => a.setor_id - b.setor_id || a.item.localeCompare(b.item));
+  const pecas = linhas.reduce((a, l) => a + l.qtd, 0);
+  const porSet = {};
+  linhas.forEach(l => porSet[l.setor_id] = (porSet[l.setor_id] || 0) + l.qtd);
+  abrirM('Baixas do dia', fmt(dia),
+    `${pecas} peças em ${linhas.length} lançamentos · ${gCache.nomeSetor}`, `
+    ${Object.keys(porSet).length > 1 ? `<section class="bl"><h5>Por setor</h5>
+      <div class="chips2">${Object.entries(porSet).sort((a, b) => a[0] - b[0])
+        .map(([s, q]) => `<span class="c2">${SET[s]} ${q}</span>`).join('')}</div></section>` : ''}
+    <section class="bl"><h5>O que saiu</h5>
+      ${listaBaixas(linhas, 'Nenhuma baixa nesse dia.')}
+    </section>
+    <div class="acoes"><button class="btn" id="gFechar">Fechar</button></div>`);
+  document.getElementById('gFechar').onclick = fecharM;
+}
+
+function listaTempos(arr, titulo, sub){
+  abrirM('Tempo de produção', titulo, sub, `
+    <section class="bl"><h5>Itens</h5>
+      ${arr.length ? arr.map(x => `<div class="hrow">
+        <span class="hq">${x.d} d</span>
+        <span style="flex:1;min-width:0;font-size:12.5px">${esc(x.it.item)}
+          <span style="display:block;font-size:10.5px;font-family:'JetBrains Mono',monospace">${esc(x.it.pedido)} · ${x.it.qtd} un${x.it.composicao ? ' · ' + esc(x.it.composicao) : ''}</span></span>
+        <span class="mono" style="font-size:11px;min-width:96px;text-align:right">${fmt(x.ini)} → ${fmt(x.fim)}</span>
+      </div>`).join('') : '<span class="dica" style="margin:0">Nenhum item nessa faixa.</span>'}
+    </section>
+    <div class="acoes"><button class="btn" id="gFechar">Fechar</button></div>`);
+  document.getElementById('gFechar').onclick = fecharM;
+}
+
+function modalFaixa(ix){
+  const [a, b, rot] = gCache.faixas[ix];
+  const arr = gCache.tempos.filter(x => x.d >= a && x.d <= b).sort((x, y) => y.d - x.d);
+  listaTempos(arr, rot, `${arr.length} itens levaram ${rot} do primeiro setor até a embalagem`);
+}
+
+function modalFamilia(f){
+  const arr = gCache.tempos
+    .filter(x => (x.it.familia || (x.it.item || '').split(' ')[0] || '—') === f)
+    .sort((x, y) => y.d - x.d);
+  const ds = arr.map(x => x.d).sort((p, q) => p - q);
+  const med = ds.length ? ds[Math.floor(ds.length / 2)] : 0;
+  listaTempos(arr, f, `${arr.length} itens · mediana ${med} dias · pior ${ds[ds.length-1]} dias`);
+}
+
+function modalSegurou(s){
+  const arr = [];
+  gCache.tempos.forEach(x => {
+    const it = x.it;
+    if(!passa(it, s)) return;
+    const sai = saidaDe(it, s); if(!sai) return;
+    const antes = [];
+    for(let p = 0; p < s; p++){ const y = saidaDe(it, p); if(y) antes.push(y); }
+    const ini = antes.length ? antes.sort().pop() : inicioProducao(it);
+    if(!ini) return;
+    const dd = Math.round((new Date(sai) - new Date(ini)) / 864e5);
+    if(dd >= 0 && dd < 400) arr.push({it, ini, fim:sai, d:dd});
+  });
+  arr.sort((a, b) => b.d - a.d);
+  listaTempos(arr, SETN[s], `${arr.length} itens · tempo entre receber e entregar`);
 }
 
 /* ================= ADMINISTRAÇÃO DE USUÁRIOS ================= */
