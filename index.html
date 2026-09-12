@@ -192,17 +192,19 @@ button.col:hover .cb{background:var(--green);border-color:var(--green)}
 .kpi .t{font-size:12.5px;font-weight:700;margin-top:6px;line-height:1.3}
 .kpi .s{font-size:11px;font-weight:500;margin-top:4px;line-height:1.35}
 .bloco{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad-lg);
-  padding:15px;margin-bottom:16px}
+  padding:15px;margin-bottom:16px;max-width:940px}
 .bloco h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:12px}
 .bloco h3 small{font-weight:500;letter-spacing:0;text-transform:none;font-size:11.5px;margin-left:8px}
-.linhabar{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)}
+.linhabar{display:grid;grid-template-columns:150px 56px 130px 1fr;align-items:center;gap:12px;
+  padding:8px 6px;border-bottom:1px solid var(--border)}
 .linhabar:last-child{border-bottom:0}
-.lb-n{font-size:13px;font-weight:700;min-width:118px}
-.lb-b{flex:1;height:9px;background:var(--bg4);border-radius:5px;overflow:hidden;
-  border:1px solid var(--border2);min-width:70px}
+.lb-n{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-v{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;text-align:right}
+.lb-b{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;border:1px solid var(--border2)}
 .lb-b i{display:block;height:100%}
-.lb-v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;min-width:44px;text-align:right}
-.lb-x{font-size:11.5px;font-weight:500;min-width:150px}
+.lb-x{font-size:11.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){.linhabar{grid-template-columns:1fr 52px;gap:6px}
+  .linhabar .lb-b{display:none}.lb-x{grid-column:1/-1;margin-top:-4px}}
 .grade{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
 .gc{border:1.5px solid var(--border2);border-radius:var(--rad);padding:8px 6px;text-align:center;background:var(--bg3)}
 .gc .s{font-size:10px;font-weight:800;letter-spacing:.06em;font-family:'JetBrains Mono',monospace}
@@ -1526,6 +1528,55 @@ function telaGerencia(){
   }).filter(x => x.n);
   const maxSeg = Math.max(1, ...segurou.map(x => x.med || 0));
 
+  // ---------- pontualidade ----------
+  const comPrazo = tempos.filter(x => x.it.data_carga);
+  const noPrazo = comPrazo.filter(x => x.fim <= x.it.data_carga);
+  const pctPrazo = comPrazo.length ? Math.round(noPrazo.length / comPrazo.length * 100) : null;
+  const atrasoMed = (() => {
+    const ds = comPrazo.filter(x => x.fim > x.it.data_carga)
+      .map(x => Math.round((new Date(x.fim) - new Date(x.it.data_carga)) / 864e5)).sort((a, b) => a - b);
+    return ds.length ? ds[Math.floor(ds.length / 2)] : null;
+  })();
+
+  // ---------- previsão: o que não deve dar tempo ----------
+  const medPorFam = {};
+  (function(){
+    const g = {};
+    tempos.forEach(x => {
+      const f = x.it.familia || (x.it.item || '').split(' ')[0] || '—';
+      (g[f] = g[f] || []).push(x.d);
+    });
+    Object.entries(g).forEach(([f, arr]) => {
+      arr.sort((a, b) => a - b);
+      medPorFam[f] = arr[Math.floor(arr.length / 2)];
+    });
+  })();
+  const medGeral = mediana;
+  const emRisco = dados.filter(it => {
+    if(it.cancelado || !it.data_carga || pronto(it) === 100) return false;
+    const ini = inicioProducao(it);
+    const fam = it.familia || (it.item || '').split(' ')[0] || '—';
+    const prev = medPorFam[fam] ?? medGeral;
+    if(prev == null) return false;
+    const gasto = ini ? Math.round((new Date(hoje()) - new Date(ini)) / 864e5) : 0;
+    const falta = prev - gasto;                 // dias que ainda deve levar
+    return falta > (dias(it.data_carga) ?? 0);  // não cabe até a carga
+  }).map(it => {
+    const fam = it.familia || (it.item || '').split(' ')[0] || '—';
+    const prev = medPorFam[fam] ?? medGeral;
+    const ini = inicioProducao(it);
+    const gasto = ini ? Math.round((new Date(hoje()) - new Date(ini)) / 864e5) : 0;
+    return {it, fam, prev, gasto, sobra: (dias(it.data_carga) ?? 0) - (prev - gasto)};
+  }).sort((a, b) => a.sobra - b.sobra);
+
+  // ---------- alertas ----------
+  const abertos = dados.filter(i => !i.cancelado && pronto(i) < 100);
+  const vencidas = abertos.filter(i => i.data_carga && dias(i.data_carga) < 0);
+  const semCarga = dados.filter(i => !i.data_carga && !i.cancelado);
+  const parados = dados.filter(i => SETN.some((_, s) => paradoNoCorte(i, s)));
+  const recPend = recusas.filter(r => r.estado === 'pendente');
+  const cancel = alteracoes.filter(a => a.tipo === 'cancel');
+
   const nomeSetor = gModo === 'final' ? 'concluídos na embalagem'
     : gModo === 'env' ? 'concluídos na expedição'
     : gSetor === 'todos' ? 'todos os setores' : SETN[gSetor];
@@ -1576,7 +1627,40 @@ function telaGerencia(){
         <div class="t">Hoje</div><div class="s">ontem foram ${ontemPecas} · melhor dia ${melhor ? porDia[melhor] + ' em ' + fmt(melhor) : '—'}</div></div>
       <div class="kpi" style="cursor:default"><div class="n">${mediana ?? '—'}</div>
         <div class="t">Dias até a embalagem</div><div class="s">mediana de ${tempos.length} itens · média ${mediaT ?? '—'}</div></div>
+      <div class="kpi ${pctPrazo === null ? '' : pctPrazo >= 90 ? 'bom' : pctPrazo >= 70 ? 'risco' : 'grave'}" style="cursor:default">
+        <div class="n">${pctPrazo === null ? '—' : pctPrazo + '%'}</div>
+        <div class="t">Ficaram prontos no prazo</div>
+        <div class="s">${comPrazo.length ? `${noPrazo.length} de ${comPrazo.length}${atrasoMed !== null ? ` · atraso típico ${atrasoMed} d` : ''}` : 'sem itens com carga concluídos'}</div></div>
     </div>
+
+    <div class="bloco">
+      <h3>Precisa de decisão hoje</h3>
+      <div class="kpis" style="margin:0">
+        <button class="kpi ${vencidas.length ? 'grave' : 'bom'}" data-ir="venc"><div class="n">${vencidas.length}</div>
+          <div class="t">Carga vencida</div><div class="s">ainda em produção</div></button>
+        <button class="kpi ${emRisco.length ? 'risco' : 'bom'}" data-ir="risco"><div class="n">${emRisco.length}</div>
+          <div class="t">Não devem dar tempo</div><div class="s">pela média da própria família</div></button>
+        <button class="kpi ${semCarga.length ? 'risco' : ''}" data-ir="sem"><div class="n">${semCarga.length}</div>
+          <div class="t">Esperando carga</div><div class="s">${new Set(semCarga.map(i => i.pedido)).size} pedidos</div></button>
+        <button class="kpi ${parados.length ? 'grave' : ''}" data-ir="parado"><div class="n">${parados.length}</div>
+          <div class="t">Parados na produção</div><div class="s">mais de ${LIM_CORTE} dias sem concluir</div></button>
+        <button class="kpi ${recPend.length ? 'risco' : ''}" data-ir="rec"><div class="n">${recPend.length}</div>
+          <div class="t">Recusas de roteiro</div><div class="s">esperando sua decisão</div></button>
+        <button class="kpi ${cancel.length ? 'grave' : ''}" data-ir="alt"><div class="n">${cancel.length}</div>
+          <div class="t">Cancelamentos ativos</div><div class="s">ordem de parar produção</div></button>
+      </div>
+    </div>
+
+    ${emRisco.length ? `<div class="bloco">
+      <h3>Previsão de atraso <small>o que a média da família diz que não vai caber</small></h3>
+      ${emRisco.slice(0, 10).map(x => `<div class="linhabar">
+        <span class="lb-n">${esc(x.it.item)}</span>
+        <span class="lb-v">${x.sobra} d</span>
+        <span class="lb-b"><i style="width:100%;background:${x.sobra < -5 ? 'var(--red)' : 'var(--amber)'}"></i></span>
+        <span class="lb-x">${esc(x.it.pedido)} · carga ${fmt(x.it.data_carga)} · ${esc(x.fam)} leva ${x.prev} d${x.gasto ? `, já gastou ${x.gasto}` : ', nem começou'}</span>
+      </div>`).join('')}
+      <span class="dica">O número é a folga: negativo quer dizer que, no ritmo normal dessa família, o item deve passar da carga.</span>
+    </div>` : ''}
     ${gModo === 'mov' && avulsas ? `<div class="bloco" style="padding:11px 15px;margin-bottom:14px">
       <span class="dica" style="margin:0"><b>${avulsas}</b> peça${avulsas > 1 ? 's' : ''} avulsa${avulsas > 1 ? 's' : ''}
       (encosto, base, estrutura) ficaram de fora da contagem — elas são pedaço de produto, não produto pronto.
@@ -1596,41 +1680,54 @@ function telaGerencia(){
     </div>
 
     <div class="bloco">
-      <h3>Do primeiro setor até a embalagem <small>${tempos.length} itens que chegaram ao fim</small></h3>
-      ${tempos.length ? dist.map((x, ix) => `<div class="linhabar cliq" data-faixa="${ix}">
+      <h3>Do primeiro setor até a embalagem <small>${tempos.length} ${tempos.length === 1 ? 'item chegou' : 'itens chegaram'} ao fim</small></h3>
+      ${!tempos.length ? '<span class="dica" style="margin:0">Nenhum item chegou à embalagem ainda — a conta aparece quando o primeiro fechar.</span>' : ''}
+      ${tempos.length < 5
+        ? `<span class="dica" style="margin:0">Só ${tempos.length} ${tempos.length === 1 ? 'item chegou' : 'itens chegaram'} ao fim até agora.
+           A distribuição por faixa aparece a partir de 5 — com menos que isso, a média engana mais do que ajuda.</span>`
+        : dist.map((x, ix) => `<div class="linhabar cliq" data-faixa="${ix}">
         <span class="lb-n">${x.r}</span>
-        <span class="lb-b"><i style="width:${Math.round(x.n / maxDist * 100)}%;background:var(--acc)"></i></span>
         <span class="lb-v">${x.n}</span>
+        <span class="lb-b"><i style="width:${Math.round(x.n / maxDist * 100)}%;background:var(--acc)"></i></span>
         <span class="lb-x">${tempos.length ? Math.round(x.n / tempos.length * 100) : 0}% dos itens</span>
-      </div>`).join('') : '<span class="dica">Nenhum item chegou à embalagem ainda — a conta aparece quando o primeiro fechar.</span>'}
-      ${tempos.length ? `<h3 style="margin-top:16px">Os que mais demoraram</h3>
+      </div>`).join('')}
+      ${tempos.length ? `<h3 style="margin-top:16px">${tempos.length === 1 ? 'O item' : 'Os que mais demoraram'}</h3>
         ${tempos.slice(-5).reverse().map(x => `<div class="linhabar">
-          <span class="lb-v" style="min-width:54px">${x.d} d</span>
-          <span class="lb-n" style="flex:1;min-width:0">${esc(x.it.item)}</span>
+          <span class="lb-n">${esc(x.it.item)}</span>
+          <span class="lb-v">${x.d} d</span>
+          <span class="lb-b"></span>
           <span class="lb-x">${esc(x.it.pedido)} · ${fmt(x.ini)} → ${fmt(x.fim)}</span>
         </div>`).join('')}` : ''}
     </div>
 
     <div class="bloco">
       <h3>Qual família demora mais <small>do primeiro setor até a embalagem</small></h3>
-      ${familias.length ? familias.map(x => `<div class="linhabar cliq" data-fam="${esc(x.f)}">
+      ${familias.length > 1 ? familias.map(x => `<div class="linhabar cliq" data-fam="${esc(x.f)}">
         <span class="lb-n">${esc(x.f)}</span>
-        <span class="lb-b"><i style="width:${Math.round(x.med / maxFam * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
         <span class="lb-v">${x.med} d</span>
+        <span class="lb-b"><i style="width:${Math.round(x.med / maxFam * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
         <span class="lb-x">${x.n} itens · ${x.pecas} peças · pior ${x.pior} d</span>
-      </div>`).join('') : '<span class="dica">Sem itens concluídos para comparar.</span>'}
+      </div>`).join('')
+        : familias.length === 1
+        ? `<span class="dica" style="margin:0">Até agora só a família <b>${esc(familias[0].f)}</b> chegou ao fim
+           (${familias[0].n} ${familias[0].n === 1 ? 'item' : 'itens'}, mediana de ${familias[0].med} dias).
+           A comparação entre famílias aparece quando houver mais de uma.</span>`
+        : '<span class="dica" style="margin:0">Sem itens concluídos para comparar.</span>'}
     </div>
 
     <div class="bloco">
       <h3>Quanto cada setor segurou <small>mediana de dias entre receber e entregar</small></h3>
       ${segurou.length ? segurou.sort((a, b) => (b.med || 0) - (a.med || 0)).map(x => `<div class="linhabar cliq" data-seg="${x.s}">
         <span class="lb-n">${x.nome}</span>
-        <span class="lb-b"><i style="width:${Math.round((x.med || 0) / maxSeg * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
         <span class="lb-v">${x.med} d</span>
+        <span class="lb-b"><i style="width:${Math.round((x.med || 0) / maxSeg * 100)}%;background:${x.med > 15 ? 'var(--red)' : x.med > 7 ? 'var(--amber)' : 'var(--green)'}"></i></span>
         <span class="lb-x">${x.n} itens · pior caso ${x.pior} d</span>
       </div>`).join('') : '<span class="dica">Ainda não há itens concluídos para medir.</span>'}
     </div>`;
 
+  document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
+    tela = 'pcp'; filtro = b.dataset.ir; sel.clear(); pintar();
+  });
   document.querySelectorAll('[data-gm]').forEach(b =>
     b.onclick = () => { gModo = b.dataset.gm; pintar(); });
   document.querySelectorAll('[data-mod]').forEach(b =>
