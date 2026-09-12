@@ -332,9 +332,10 @@ th[data-col]:hover{}
   <div class="hr">
     <div class="abas" id="abas" hidden>
       <button class="aba on" data-t="pcp">RQ 213 · PCP</button>
-      <button class="aba" data-t="setor">RQ 200 · Tubular</button>
+      <button class="aba" data-t="setor">RQ 200 · Setor</button>
     </div>
     <span class="quem" id="quem"></span>
+    <select class="sel" id="selSetor" hidden></select>
     <div class="dataseg" id="dataseg" hidden>
       <button data-dd="0" class="on">Hoje <i></i></button>
       <button data-dd="1">Ontem <i></i></button>
@@ -507,7 +508,8 @@ const marca = c => {
   const i = ordem.findIndex(o => o.col === c);
   return i < 0 ? '' : `<span class="ordm">${ordem[i].dir === 'asc' ? '▲' : '▼'}${ordem.length > 1 ? i + 1 : ''}</span>`;
 };
-const setorDaTela = () => perfil.papel === 'setor' ? perfil.setor_id : 1;
+let setorOlhado = 1;
+const setorDaTela = () => perfil.papel === 'setor' ? perfil.setor_id : setorOlhado;
 function podeEscrever(){
   if(!perfil) return false;
   return tela === 'pcp'
@@ -712,7 +714,7 @@ const altsDe = it => alteracoes.filter(a => a.pedido === it.pedido && (!a.itens 
 function filtrar(){
   let l = dados;
   if(tela === 'setor'){
-    const s = perfil.papel === 'setor' ? perfil.setor_id : 1;
+    const s = setorDaTela();
     l = l.filter(i => passa(i, s));
     if(filtro === 'pend') l = l.filter(i => ['pe','pa'].includes(estado(i, s)));
     if(filtro === 'ok') l = l.filter(i => estado(i, s) === 'ok');
@@ -809,7 +811,7 @@ function pintar(){
   fx.textContent = !podeEscrever()
     ? (tela === 'pcp'
         ? 'Somente leitura. Quem define pedido e carga é o PCP.'
-        : `Somente leitura. Quem baixa é o líder do ${SETN[setorDaTela()].toLowerCase()}.`)
+        : `Somente leitura. Quem baixa é o líder de ${SETN[setorDaTela()]}.`)
     : edicao
       ? (tela === 'pcp'
           ? 'Modo edição — você pode criar pedidos e definir carga.'
@@ -819,6 +821,17 @@ function pintar(){
   document.getElementById('btPainel').classList.toggle('on', painel);
   document.getElementById('lateral').hidden = !(painel && tela === 'pcp');
   document.getElementById('main2').classList.toggle('compainel', painel && tela === 'pcp');
+  const ss = document.getElementById('selSetor');
+  ss.hidden = !(tela === 'setor' && perfil.papel !== 'setor');
+  if(!ss.hidden){
+    const atual = String(setorOlhado);
+    if(ss.dataset.pronto !== '1'){
+      ss.innerHTML = SETN.map((n, s) => `<option value="${s}">${n}</option>`).join('');
+      ss.dataset.pronto = '1';
+      ss.onchange = () => { setorOlhado = Number(ss.value); sel.clear(); filtro = null; pintar(); };
+    }
+    if(ss.value !== atual) ss.value = atual;
+  }
   const ds = document.getElementById('dataseg');
   ds.hidden = !(tela === 'setor' && editando());
   if(!DATA) DATA = hoje();
@@ -836,9 +849,13 @@ function pintar(){
   const avd = document.getElementById('avisoData');
   avd.hidden = !(DATA !== hoje() && tela === 'setor' && editando());
   document.getElementById('avisoDataTxt').textContent = fmt(DATA);
-  document.querySelectorAll('.aba').forEach(a => a.classList.toggle('on', a.dataset.t === tela));
+  document.querySelectorAll('.aba').forEach(a => {
+    a.classList.toggle('on', a.dataset.t === tela);
+    if(a.dataset.t === 'setor')
+      a.textContent = 'RQ 200 · ' + SETN[perfil.papel === 'setor' ? perfil.setor_id : setorOlhado];
+  });
   document.getElementById('tituloTela').innerHTML = tela === 'pcp'
-    ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[perfil.papel === 'setor' ? perfil.setor_id : 1]}</em>`;
+    ? 'RQ 213 <em>· PCP</em>' : `RQ 200 <em>· ${SETN[setorDaTela()]}</em>`;
   const cx = document.querySelector('.ts');
   const rx = cx ? cx.scrollLeft : 0, ry = cx ? cx.scrollTop : 0;
   const janela = window.scrollY;
@@ -1108,10 +1125,10 @@ function telaSetor(){
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
-    (lista.length ? '' : `<div class="vazio">Nada no ${SETN[s].toLowerCase()} com esse recorte.</div>`);
+    (lista.length ? '' : `<div class="vazio">Nada em ${SETN[s]} com esse recorte.</div>`);
 
   document.getElementById('cont').innerHTML =
-    `<b>${lista.length}</b> de ${dados.filter(i => passa(i, s)).length} itens · <b>${pend}</b> pendentes`;
+    `<b>${lista.length}</b> de ${dados.filter(i => passa(i, s)).length} itens em ${SETN[s]} · <b>${pend}</b> pendentes`;
   ligarFiltro();
   const bm = document.getElementById('btMortas');
   if(bm) bm.onclick = () => { verMortas = !verMortas; pintar(); };
