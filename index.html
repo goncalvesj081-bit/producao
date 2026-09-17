@@ -2097,23 +2097,39 @@ function modalDetalhe(id, s){
 }
 
 /* ---------- importação da planilha ---------- */
-// Modelo padrão (RQ 213 - C, tipo OUTUBRO_01):
-// 0..8 = status dos 9 setores (OK = passa, VAZIO = não passa)
-// 10 kanban · 11 pedido · 12 classificação · 13 data carga · 14 nº
-// 15 qtd · 16 alteração · 17 item · 18 composição · 19 observações · 23 cliente
-const COL = {kanban:10, pedido:11, classif:12, dataCarga:13, carga:14, qtd:15,
-  alteracao:16, item:17, composicao:18, obs:19, cliente:23};
-const SETOR_COL = [0,1,2,3,4,5,6,7,8];   // índice = setor_id 0..8; expedição (9) não vem na planilha
-
+// O importador descobre as colunas pelo NOME do cabeçalho, não pela posição.
+// A RQ 213 cheia tem 10 colunas de setor e a mensal tem 9 — por posição, tudo
+// depois disso entraria trocado.
+const SETOR_ALVO = [
+  ['FUSAO','FUS'], ['TUBULAR','TUB'], ['PINTURA','PINT','PIN'], ['TECELAGEM','TEC'],
+  ['MARCENARIA','MADEIRA','MAD'], ['ATELIE','ATE'], ['MONTAGEM','MONT','MON'],
+  ['OMBRELONE','OMB'], ['EMBALAGEM','EMB'], ['EXPEDICAO','EXP']
+];
+const CAMPOS = [
+  ['kanban',      t => /DATA.*(KANBAN|KAMBAM)/.test(t)],
+  ['pedido',      t => t === 'PEDIDO'],
+  ['classif',     t => t === 'CLASSIFICACAO'],
+  ['dataCarga',   t => /^DATA\s*(DE\s*)?CARGA$/.test(t)],
+  ['carga',       t => t === 'N°' || t === 'Nº' || t === 'N' || t === 'CARGA'],
+  ['qtd',         t => /^(QTD|QUANT|QUANTIDADE)\.?$/.test(t)],
+  ['alteracao',   t => /^ALTERACAO/.test(t)],
+  ['item',        t => t === 'ITEM'],
+  ['composicao',  t => /^COMPOSICAO/.test(t)],
+  ['obs',         t => /^OBSERVAC(AO|OES)( DO PEDIDO)?$/.test(t)],
+  ['cliente',     t => t === 'CLIENTE'],
+  ['familia',     t => /^FAMILIA/.test(t)]
+];
 let previa = null;
 
+// não usa "instanceof Date": objeto vindo de outro contexto não passa nesse teste
+const ehData = v => v && typeof v === 'object' && typeof v.getTime === 'function' && !isNaN(v.getTime());
 function textoCel(v){
   if(v === null || v === undefined) return '';
-  if(v instanceof Date) return v.toISOString().slice(0,10);
+  if(ehData(v)) return v.toISOString().slice(0,10);
   return String(v).replace(/\s+/g, ' ').trim();
 }
 function dataCel(v){
-  if(v instanceof Date) return v.getFullYear() > 1901 ? v.toISOString().slice(0,10) : null;
+  if(ehData(v)) return v.getFullYear() > 1901 ? v.toISOString().slice(0,10) : null;
   if(typeof v === 'number' && v > 20000 && v < 80000){
     const d = new Date(Date.UTC(1899, 11, 30) + v * 864e5);
     return d.toISOString().slice(0,10);
@@ -2127,6 +2143,24 @@ function dataCel(v){
 const chaveDe = o => [o.pedido, o.classificacao, o.item, o.composicao, o.observacao]
   .map(x => (x || '').toUpperCase().trim()).join('|');
 
+const semAcento = s => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/\s+/g,' ').trim().toUpperCase();
+
+function mapearColunas(cabecalho){
+  const t = cabecalho.map(semAcento);
+  const col = {}, setores = {};
+  t.forEach((txt, j) => {
+    if(!txt) return;
+    if(/^STATUS/.test(txt)){
+      const resto = txt.replace(/^STATUS\.?\s*/, '').replace(/[.\s]+$/,'');
+      const s = SETOR_ALVO.findIndex(al => al.some(a => resto.startsWith(a)));
+      if(s >= 0 && setores[s] === undefined) setores[s] = j;
+      return;
+    }
+    CAMPOS.forEach(([k, teste]) => { if(col[k] === undefined && teste(txt)) col[k] = j; });
+  });
+  return {col, setores};
+}
 async function lerPlanilha(file){
   toast('Lendo a planilha…');
   try{
@@ -2141,6 +2175,11 @@ async function lerPlanilha(file){
       if(t.includes('PEDIDO') && t.includes('ITEM')){ hdr = i; break; }
     }
     if(hdr < 0) return toast('Não achei o cabeçalho (preciso das colunas PEDIDO e ITEM)', true);
+
+    const {col: COL, setores: MAPA_SET} = mapearColunas(linhas[hdr] || []);
+    if(COL.pedido === undefined || COL.item === undefined)
+      return toast('Não encontrei as colunas PEDIDO e ITEM no cabeçalho', true);
+    const setoresNaPlanilha = Object.keys(MAPA_SET).map(Number).sort((a, b) => a - b);
 
     const existentes = new Set(dados.map(i => i.chave_import));
     const vistas = new Map();
@@ -2165,14 +2204,18 @@ async function lerPlanilha(file){
       o._alteracao = textoCel(r[COL.alteracao]).toUpperCase();
       o._chave = chaveDe(o);
       // roteiro: OK passa, VAZIO não passa, em branco assume que passa
-      o._naoPassa = [];
+      o._naoPassa = []; o._feitos = [];
       let marcados = 0;
-      SETOR_COL.forEach((c, s) => {
-        const v = textoCel(r[c]).toUpperCase();
-        if(v) marcados++;
-        if(v === 'VAZIO' || v === 'X' || v === '-') o._naoPassa.push(s);
+      setoresNaPlanilha.forEach(s => {
+        const bruto = r[MAPA_SET[s]];
+        const dt = dataCel(bruto);
+        const v = textoCel(bruto).toUpperCase();
+        if(v || dt) marcados++;
+        if(dt) o._feitos.push({s, data:dt});                       // já concluído nesse setor
+        else if(s === 9) return;                                   // expedição sempre passa
+        else if(v === 'VAZIO' || v === 'X' || v === '-' || v === 'CANCELADO') o._naoPassa.push(s);
       });
-      // expedição não vem no modelo da planilha e sempre passa
+      // setor que nem existe na planilha (ex.: expedição na mensal) sempre passa
       o._semRoteiro = marcados === 0;
       const n = (vistas.get(o._chave) || 0) + 1;
       vistas.set(o._chave, n);
@@ -2182,14 +2225,26 @@ async function lerPlanilha(file){
       itens.push(o);
     }
     if(!itens.length) return toast('Nenhuma linha com pedido e item', true);
-    previa = {itens, pulados, hdr, arquivo:file.name};
+    previa = {itens, pulados, hdr, arquivo:file.name,
+      comHistorico: itens.some(i => i._feitos.length),
+      setores: setoresNaPlanilha};
     modalPrevia();
   }catch(e){ erro(e); }
 }
 
+let impDesde = '';
+let impHist = true;
+
 function modalPrevia(){
-  const {itens, pulados, arquivo} = previa;
+  const {itens: todos, pulados, arquivo, comHistorico} = previa;
+  if(impDesde === '') impDesde = (new Date().getFullYear()) + '-01-01';
+  const itens = todos.filter(i => !impDesde || !i.data_kanban || i.data_kanban >= impDesde);
+  const foraDoPeriodo = todos.length - itens.length;
   const novos = itens.filter(i => !i._jaExiste);
+  const comBaixas = novos.filter(i => i._feitos.length);
+  const totalBaixas = novos.reduce((a, i) => a + i._feitos.length, 0);
+  const prontos = novos.filter(i => i._feitos.length &&
+    i._feitos.length + i._naoPassa.length >= previa.setores.length);
   const jaTem = itens.length - novos.length;
   const repet = itens.filter(i => i._repetida).length;
   const semRot = itens.filter(i => i._semRoteiro).length;
@@ -2197,6 +2252,22 @@ function modalPrevia(){
   const porSetor = SETN.map((_, s) => novos.filter(i => !i._naoPassa.includes(s)).length);
   abrirM('Importar planilha', arquivo,
     `${itens.length} linhas lidas · ${new Set(itens.map(i => i.pedido)).size} pedidos`, `
+    <section class="bl"><h5>Recorte</h5>
+      <div class="g2">
+        <input type="date" id="impDesde" value="${impDesde}">
+        <button class="btn" id="impTudo">Trazer tudo</button>
+      </div>
+      <span class="dica">${foraDoPeriodo
+        ? `${foraDoPeriodo} linhas com kanban anterior a ${fmt(impDesde)} ficam de fora.`
+        : 'Todas as linhas do arquivo estão no recorte.'}</span>
+    </section>
+    ${comHistorico ? `<section class="bl"><h5>Histórico encontrado</h5>
+      <div class="chips2">
+        <button type="button" class="c2 ${impHist ? 'on' : ''}" id="impHist">${impHist ? 'Importar as baixas' : 'Ignorar as baixas'}</button>
+      </div>
+      <span class="dica">${totalBaixas} datas de conclusão em ${comBaixas.length} itens${prontos.length ? ` · ${prontos.length} já passaram por todos os setores` : ''}.
+      Elas entram como baixa feita por “importado da planilha”, com a data da própria planilha.</span>
+    </section>` : ''}
     <section class="bl"><h5>O que vai entrar</h5>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="pv forte"><div class="k">Novos</div><div class="v">${novos.length}</div></div>
@@ -2225,28 +2296,37 @@ function modalPrevia(){
       </div>
     </section>
     <div class="acoes">
-      <button class="btn pri" id="impConfirmar" ${novos.length ? '' : 'disabled'}>Importar ${novos.length} itens</button>
+      <button class="btn pri" id="impConfirmar" ${novos.length ? '' : 'disabled'}>Importar ${novos.length} itens${comHistorico && impHist && totalBaixas ? ` e ${totalBaixas} baixas` : ''}</button>
       <button class="btn" id="impCancelar">Cancelar</button>
     </div>`);
   document.getElementById('impCancelar').onclick = () => { previa = null; fecharM(); };
   document.getElementById('impConfirmar').onclick = importar;
+  document.getElementById('impDesde').onchange = e => { impDesde = e.target.value; modalPrevia(); };
+  document.getElementById('impTudo').onclick = () => { impDesde = '1900-01-01'; modalPrevia(); };
+  const bh = document.getElementById('impHist');
+  if(bh) bh.onclick = () => { impHist = !impHist; modalPrevia(); };
 }
 
 async function importar(){
-  const novos = previa.itens.filter(i => !i._jaExiste);
+  const todos = previa.itens.filter(i => !impDesde || !i.data_kanban || i.data_kanban >= impDesde);
+  const novos = todos.filter(i => !i._jaExiste);
   const b = document.getElementById('impConfirmar');
   b.disabled = true;
-  let feitos = 0;
-  for(let k = 0; k < novos.length; k += 50){
-    const lote = novos.slice(k, k + 50);
-    b.textContent = `Importando ${k + 1}–${Math.min(k + 50, novos.length)} de ${novos.length}…`;
+  const LOTE = 200;
+  let feitos = 0, baixasFeitas = 0;
+
+  for(let k = 0; k < novos.length; k += LOTE){
+    const lote = novos.slice(k, k + LOTE);
+    b.textContent = `Importando ${k + 1}–${Math.min(k + LOTE, novos.length)} de ${novos.length}…`;
+
     const { data, error } = await sb.from('itens').insert(lote.map(i => ({
       pedido:i.pedido, classificacao:i.classificacao, item:i.item, composicao:i.composicao,
       observacao:i.observacao, qtd:i.qtd, cliente:i.cliente, familia:i.familia,
       data_kanban:i.data_kanban, data_carga:i.data_carga, carga:i.carga
     }))).select();
     if(error){ b.disabled = false; b.textContent = 'Importar'; return erro(error); }
-    // roteiro: marca o que não passa
+
+    // roteiro: o que não passa
     const off = [];
     data.forEach((linha, n) => lote[n]._naoPassa.forEach(s =>
       off.push({item_id:linha.id, setor_id:s, passa:false})));
@@ -2254,6 +2334,23 @@ async function importar(){
       const r = await sb.from('roteiro').upsert(off, {onConflict:'item_id,setor_id'});
       if(r.error) erro(r.error);
     }
+
+    // histórico: cada data vira uma baixa e o fechamento do setor
+    if(impHist){
+      const bx = [], fe = [];
+      data.forEach((linha, n) => lote[n]._feitos.forEach(f => {
+        bx.push({item_id:linha.id, setor_id:f.s, data:f.data, qtd:lote[n].qtd,
+          por:'importado da planilha'});
+        fe.push({item_id:linha.id, setor_id:f.s, data:f.data, por:'importado da planilha'});
+      }));
+      if(bx.length){
+        const r1 = await sb.from('baixas').insert(bx);
+        if(r1.error) erro(r1.error); else baixasFeitas += bx.length;
+        const r2 = await sb.from('fechamentos').upsert(fe, {onConflict:'item_id,setor_id'});
+        if(r2.error) erro(r2.error);
+      }
+    }
+
     // alterações que vieram na planilha
     const alts = [];
     data.forEach((linha, n) => {
@@ -2267,10 +2364,12 @@ async function importar(){
     }
     feitos += data.length;
   }
+
   previa = null; fecharM();
-  toast(`${feitos} itens importados`);
+  toast(`${feitos} itens importados${baixasFeitas ? ` · ${baixasFeitas} baixas` : ''}`);
   await carregar(true);
 }
+
 function classificarAlt(t){
   const s = (t || '').toUpperCase();
   if(/CANCEL|PARAR PRODU/.test(s)) return 'cancel';
