@@ -468,6 +468,8 @@ let perfil = null, tela = 'pcp', dados = [], alteracoes = [];
 let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
 let edicao = false, painel = false, verMortas = false, DATA = null;
 let ordem = [], recusas = [], lotes = [], usuarios = [];
+let limite = 250;
+const PASSO_LIMITE = 250;
 let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
 const LIM_CORTE = 20;
@@ -508,11 +510,7 @@ function pecasDe(it, s){
   const minhas = it.baixas.filter(b => b.setor_id === s && b.peca).map(b => b.peca);
   return [...new Set([...minhas, ...doHist, ...PECAS_PADRAO])].slice(0, 8);
 }
-function porPeca(it, s){
-  const m = {};
-  it.baixas.filter(b => b.setor_id === s && b.peca).forEach(b => m[b.peca] = (m[b.peca] || 0) + b.qtd);
-  return m;
-}
+const porPeca = (it, s) => (it.agg[s] || {}).x || {};
 const etapaDe = (it, s, k) => it.etapas.find(e => e.setor_id === s && e.etapa === k);
 const etapaEntrada = s => (ETAPAS[s] || [])[0];
 const etapaSaida = s => (ETAPAS[s] || []).find(e => /fim$/.test(e.k));
@@ -653,7 +651,7 @@ async function iniciar(){
     await sb.auth.signOut(); return;
   }
   perfil = p;
-  edicao = false; sel.clear(); filtro = null; busca = ''; barraSig = ''; ordem = []; DATA = hoje();
+  edicao = false; sel.clear(); filtro = null; busca = ''; barraSig = ''; ordem = []; limite = PASSO_LIMITE; DATA = hoje();
   Object.keys(F).forEach(k => F[k] = '');
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
@@ -665,7 +663,7 @@ async function iniciar(){
   document.querySelector('.aba[data-t="admin"]').hidden = p.papel !== 'admin';
   document.querySelector('.aba[data-t="gerencia"]').hidden = p.papel === 'setor';
   document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
-    tela = a.dataset.t; sel.clear(); edicao = false; barraSig = ''; fecharM(); pintar();
+    tela = a.dataset.t; sel.clear(); edicao = false; barraSig = ''; limite = PASSO_LIMITE; fecharM(); pintar();
   });
   await carregar();
   ligarTempoReal();
@@ -694,32 +692,42 @@ async function carregar(silencioso){
   recarregando = true;
   const cx = document.querySelector('.ts');
   const rolX = cx ? cx.scrollLeft : 0, rolY = cx ? cx.scrollTop : 0;
-  const foco = document.activeElement && document.activeElement.id;
-  const cursor = foco === 'q' ? document.activeElement.selectionStart : null;
   if(!silencioso) document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
-  const [itens, rot, bx, fec, alt, etp, rec] = await Promise.all([
-    todos('itens', 'pedido'), todos('roteiro'), todos('baixas'), todos('fechamentos'),
-    todos('alteracoes'), todos('etapas'), todos('recusas')
+
+  const [grid, alt, rec] = await Promise.all([
+    todos('v_grid', 'pedido'), todos('alteracoes'), todos('recusas')
   ]);
-  for(const r of [itens, rot, bx, fec, alt, etp, rec]) if(r.error){ recarregando = false; return erro(r.error); }
+  for(const r of [grid, alt, rec]) if(r.error){ recarregando = false; return erro(r.error); }
   alteracoes = alt.data || [];
   recusas = rec.data || [];
-  const porItem = {};
-  (rot.data || []).forEach(r => ((porItem[r.item_id] = porItem[r.item_id] || {}).rot = porItem[r.item_id].rot || {}, porItem[r.item_id].rot[r.setor_id] = r.passa));
-  dados = (itens.data || []).map(i => {
-    const rt = (porItem[i.id] || {}).rot || {};
-    return Object.assign({}, i, {
-      rot: rt,
-      baixas: (bx.data || []).filter(b => b.item_id === i.id),
-      fech: (fec.data || []).filter(f => f.item_id === i.id),
-      etapas: (etp.data || []).filter(e => e.item_id === i.id)
-    });
+
+  dados = (grid.data || []).map(g => {
+    const st = g.st || {}, rot = {}, agg = {};
+    for(let s = 0; s < 10; s++){
+      const x = st[s] || st[String(s)];
+      rot[s] = x ? x.p !== false : true;
+      agg[s] = x ? {f:x.f, t:x.t || 0, c:x.c || 0, u:x.u, x:x.x || {}}
+                 : {f:null, t:0, c:0, u:null, x:{}};
+    }
+    return Object.assign({}, g, {rot, agg, etapas: g.etapas || [], baixas: null});
   });
+
   pintar();
   const cx2 = document.querySelector('.ts');
   if(cx2){ cx2.scrollLeft = rolX; cx2.scrollTop = rolY; }
   recarregando = false;
 }
+
+// detalhe de um item só, buscado na hora em que o modal abre
+async function carregarBaixas(it){
+  if(it.baixas) return it.baixas;
+  const { data, error } = await sb.from('baixas').select('*')
+    .eq('item_id', it.id).order('data');
+  if(error){ erro(error); return []; }
+  it.baixas = data || [];
+  return it.baixas;
+}
+
 document.getElementById('btEditar').onclick = () => {
   if(!podeEscrever()) return;
   edicao = !edicao;
@@ -751,9 +759,9 @@ document.getElementById('btTema').onclick = () => {
 
 /* ---------------- HELPERS DE ESTADO ---------------- */
 const passa = (it, s) => it.rot[s] !== false;
-const baixado = (it, s) => it.baixas.filter(b => b.setor_id === s).reduce((a, b) => a + b.qtd, 0);
-const completo = (it, s) => it.baixas.filter(b => b.setor_id === s && !b.peca).reduce((a, b) => a + b.qtd, 0);
-const fechado = (it, s) => it.fech.find(f => f.setor_id === s);
+const baixado = (it, s) => (it.agg[s] || {}).t || 0;
+const completo = (it, s) => (it.agg[s] || {}).c || 0;
+const fechado = (it, s) => (it.agg[s] || {}).f ? {data:it.agg[s].f, por:'—'} : null;
 function estado(it, s){
   if(!passa(it, s)) return 'sk';
   if(fechado(it, s) || completo(it, s) >= it.qtd) return 'ok';
@@ -761,10 +769,8 @@ function estado(it, s){
   return 'pe';
 }
 function dataFim(it, s){
-  const f = fechado(it, s);
-  if(f) return f.data;
-  const b = it.baixas.filter(x => x.setor_id === s);
-  return b.length ? b[b.length-1].data : null;
+  const a = it.agg[s] || {};
+  return a.f || a.u || null;
 }
 function pronto(it){
   let f = 0, t = 0;
@@ -968,9 +974,9 @@ function montarBarra(selects){
   q.oninput = e => {
     const v = e.target.value;
     clearTimeout(q._t);
-    q._t = setTimeout(() => { busca = v.trim(); pintar(); }, 260);
+    q._t = setTimeout(() => { busca = v.trim(); limite = PASSO_LIMITE; pintar(); }, 260);
   };
-  el.querySelectorAll('[data-fk]').forEach(s => s.onchange = () => { F[s.dataset.fk] = s.value; pintar(); });
+  el.querySelectorAll('[data-fk]').forEach(s => s.onchange = () => { F[s.dataset.fk] = s.value; limite = PASSO_LIMITE; pintar(); });
   document.getElementById('fLimpar').onclick = () => {
     busca = ''; Object.keys(F).forEach(k => F[k] = ''); ordem = [];
     document.getElementById('q').value = '';
@@ -989,6 +995,15 @@ function atualizarBarra(selects){
   if(fl) fl.hidden = !(busca || Object.values(F).some(Boolean) || ordem.length);
 }
 
+function maisBotao(total, mostrando){
+  if(total <= mostrando) return '';
+  return `<div class="linha" style="justify-content:center;margin-top:12px">
+    <button class="btn" id="btMais250">Mostrar mais ${Math.min(PASSO_LIMITE, total - mostrando)}
+      <span class="dica" style="display:inline;margin:0">de ${total - mostrando} restantes</span></button>
+    <button class="btn" id="btTodos">Mostrar todos os ${total}</button>
+  </div>`;
+}
+
 function barraFiltro(chips, selects){
   montarBarra(selects || []);
   document.getElementById('barraChips').innerHTML =
@@ -997,15 +1012,23 @@ function barraFiltro(chips, selects){
 }
 function ligarFiltro(){
   document.querySelectorAll('th[data-col]').forEach(t => t.onclick = () => clicarCol(t.dataset.col));
+  const bm = document.getElementById('btMais250');
+  if(bm) bm.onclick = () => { limite += PASSO_LIMITE; pintar(); };
+  const bt = document.getElementById('btTodos');
+  if(bt) bt.onclick = () => {
+    if(!confirm('Desenhar tudo de uma vez pode travar a tela por alguns segundos. Continuar?')) return;
+    limite = 1e9; pintar();
+  };
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
-    filtro = filtro === b.dataset.f ? null : b.dataset.f; pintar();
+    filtro = filtro === b.dataset.f ? null : b.dataset.f; limite = PASSO_LIMITE; pintar();
   });
 }
 
 /* ---------- RQ 213 (PCP) ---------- */
 function telaPCP(){
   const podeEditar = editando();
-  const lista = ordenarLista(filtrar(), 1);
+  const listaToda = ordenarLista(filtrar(), 1);
+  const lista = listaToda.slice(0, limite);
   const nSem = dados.filter(i => !i.data_carga).length;
   const nRec = recusas.filter(r => r.estado === 'pendente').length;
   document.getElementById('conteudo').innerHTML =
@@ -1052,7 +1075,7 @@ function telaPCP(){
                   ? `<span class="ic">${nomes.length}</span><span class="dd">${nomes.map(n => n.slice(0,3)).join(' ')}</span>`
                   : `<span class="ic">${completo(it, s)}/${it.qtd}</span>`)
               : '<span class="ic">—</span>';
-            const temInfo = it.baixas.some(b => b.setor_id === s)
+            const temInfo = baixado(it, s) > 0
               || it.etapas.some(x => x.setor_id === s) || !!fechado(it, s);
             return `<td class="c">${temInfo
               ? `<button class="pill p-${e}" data-det="${it.id}|${s}" title="Ver o que o ${SETN[s].toLowerCase()} registrou">${inner}</button>`
@@ -1076,10 +1099,12 @@ function telaPCP(){
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
-    (lista.length ? '' : '<div class="vazio">Nenhum item. Use “Novo pedido” para criar o primeiro.</div>');
+    maisBotao(listaToda.length, lista.length) +
+    (listaToda.length ? '' : '<div class="vazio">Nenhum item. Use “Novo pedido” para criar o primeiro.</div>');
 
   document.getElementById('cont').innerHTML =
-    `<b>${lista.length}</b> de ${dados.length} itens · <b>${nSem}</b> sem carga`;
+    `<b>${listaToda.length}</b> de ${dados.length} itens · <b>${nSem}</b> sem carga${
+      listaToda.length > lista.length ? ` · mostrando ${lista.length}` : ''}`;
   ligarFiltro();
   const bn = document.getElementById('btNovo');
   if(bn) bn.onclick = modalNovo;
@@ -1096,7 +1121,7 @@ function telaPCP(){
   });
   const st = document.getElementById('selTodos');
   if(st){
-    const peds = [...new Set(lista.map(i => i.pedido))];
+    const peds = [...new Set(listaToda.map(i => i.pedido))];
     st.checked = peds.length && peds.every(p => sel.has(p));
     st.onchange = () => { peds.forEach(p => st.checked ? sel.add(p) : sel.delete(p)); atualizarSelecao(); };
   }
@@ -1134,7 +1159,8 @@ function telaSetor(){
   const nParado = dados.filter(i => paradoNoCorte(i, s)).length;
   const modoFila = filtro === 'fila' && podeBaixar;
   const ets = etapasDe(s);
-  const lista = ordenarLista(lista0, s);
+  const listaToda = ordenarLista(lista0, s);
+  const lista = listaToda.slice(0, limite);
 
   document.getElementById('conteudo').innerHTML =
     barraFiltro(`
@@ -1208,10 +1234,12 @@ function telaSetor(){
         </tr>`;
       }).join('')}
       </tbody></table></div></div>` +
-    (lista.length ? '' : `<div class="vazio">Nada em ${SETN[s]} com esse recorte.</div>`);
+    maisBotao(listaToda.length, lista.length) +
+    (listaToda.length ? '' : `<div class="vazio">Nada em ${SETN[s]} com esse recorte.</div>`);
 
   document.getElementById('cont').innerHTML =
-    `<b>${lista.length}</b> de ${dados.filter(i => passa(i, s)).length} itens em ${SETN[s]} · <b>${pend}</b> pendentes`;
+    `<b>${listaToda.length}</b> de ${dados.filter(i => passa(i, s)).length} itens em ${SETN[s]} · <b>${pend}</b> pendentes${
+      listaToda.length > lista.length ? ` · mostrando ${lista.length}` : ''}`;
   ligarFiltro();
   const bm = document.getElementById('btMortas');
   if(bm) bm.onclick = () => { verMortas = !verMortas; pintar(); };
@@ -1275,7 +1303,7 @@ async function rapidoEtapa(id, k){
 }
 async function rapidoBaixa(id){
   const s = setorDaTela(), it = dados.find(x => x.id === id);
-  if(!passa(it, s) || estado(it, s) === 'ok' || it.baixas.some(b => b.setor_id === s)) return modalBaixa(id);
+  if(!passa(it, s) || estado(it, s) === 'ok' || baixado(it, s) > 0) return modalBaixa(id);
   const falta = it.qtd - completo(it, s);
   const { error } = await sb.from('baixas').insert({item_id:id, setor_id:s, data:DATA,
     qtd:falta, por:perfil.nome, por_id:perfil.id});
@@ -1433,6 +1461,21 @@ function modalCarga(){
 
 /* ================= GERÊNCIA · INDICADORES ================= */
 let gSetor = 'todos', gDias = 30, gCache = null, gModo = 'mov';
+let gBaixas = null, gBaixasDe = null;
+async function baixasDoPeriodo(de){
+  if(gBaixas && gBaixasDe && gBaixasDe <= de) return gBaixas;
+  const PAG = 1000; let saida = [], desde = 0;
+  for(;;){
+    const { data, error } = await sb.from('baixas').select('item_id,setor_id,data,qtd,peca,por,obs')
+      .gte('data', de).range(desde, desde + PAG - 1);
+    if(error){ erro(error); break; }
+    saida = saida.concat(data || []);
+    if(!data || data.length < PAG) break;
+    desde += PAG;
+  }
+  gBaixas = saida; gBaixasDe = de;
+  return gBaixas;
+}
 
 const diaDe = s => s ? s.slice(0,10) : null;
 const somaDias = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n);
@@ -1440,19 +1483,24 @@ const somaDias = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.ge
 
 // primeira marca do item em qualquer setor (entrada na produção)
 function inicioProducao(it){
-  const ds = [...it.etapas.map(e => e.data), ...it.baixas.map(b => b.data)].filter(Boolean);
-  return ds.length ? ds.sort()[0] : null;
+  const ds = it.etapas.map(e => e.data);
+  for(let s = 0; s < 10; s++){ const a = it.agg[s] || {}; if(a.u) ds.push(a.u); if(a.f) ds.push(a.f); }
+  const v = ds.filter(Boolean).sort();
+  return v.length ? v[0] : null;
 }
 // quando saiu de um setor
 function saidaDe(it, s){
-  const f = fechado(it, s);
-  if(f) return f.data;
-  const b = it.baixas.filter(x => x.setor_id === s && !x.peca).map(x => x.data).sort();
-  return b.length && completo(it, s) >= it.qtd ? b[b.length-1] : null;
+  const a = it.agg[s] || {};
+  if(a.f) return a.f;
+  return (a.c >= it.qtd && a.u) ? a.u : null;
 }
 
-function telaGerencia(){
+async function telaGerencia(){
   const ate = hoje(), de = somaDias(ate, -(gDias - 1));
+  if(!gBaixas || gBaixasDe > de){
+    document.getElementById('conteudo').innerHTML = '<div class="vazio">Somando as baixas do período…</div>';
+    await baixasDoPeriodo(de);
+  }
   const noPeriodo = b => b.data >= de && b.data <= ate;
   const doSetor = b => gSetor === 'todos' || b.setor_id === Number(gSetor);
 
@@ -1466,21 +1514,15 @@ function telaGerencia(){
   for(let i = 0; i < gDias; i++) porDia[somaDias(de, i)] = 0;
   let totalPecas = 0, totalRegistros = 0, avulsas = 0;
 
-  function conclusaoEm(it, s){
-    const f = fechado(it, s);
-    if(f) return f.data;
-    if(completo(it, s) < it.qtd) return null;
-    const ds = it.baixas.filter(b => b.setor_id === s && !b.peca).map(b => b.data).sort();
-    return ds.length ? ds[ds.length-1] : null;
-  }
+  const conclusaoEm = (it, s) => saidaDe(it, s);
 
   if(gModo === 'mov'){
-    dados.forEach(it => it.baixas.forEach(b => {
+    (gBaixas || []).forEach(b => {
       if(!doSetor(b) || !noPeriodo(b)) return;
-      if(b.peca){ if(doSetor(b)) avulsas += b.qtd; return; }
+      if(b.peca){ avulsas += b.qtd; return; }
       porDia[b.data] = (porDia[b.data] || 0) + b.qtd;
       totalPecas += b.qtd; totalRegistros++;
-    }));
+    });
   } else {
     const alvo = gModo === 'final' ? 8 : 9;
     dados.forEach(it => {
@@ -1758,12 +1800,16 @@ function listaBaixas(linhas, vazio){
 function modalDia(dia){
   const linhas = [];
   const alvo = gModo === 'final' ? 8 : gModo === 'env' ? 9 : null;
-  dados.forEach(it => it.baixas.forEach(b => {
+  const porId = {};
+  dados.forEach(it => porId[it.id] = it);
+  (gBaixas || []).forEach(b => {
     if(b.data !== dia) return;
     if(alvo !== null ? b.setor_id !== alvo
       : (gSetor !== 'todos' && b.setor_id !== Number(gSetor))) return;
-    linhas.push(Object.assign({}, b, {item:it.item, pedido:it.pedido, composicao:it.composicao}));
-  }));
+    const it = porId[b.item_id];
+    linhas.push(Object.assign({}, b, {item:it ? it.item : '—',
+      pedido:it ? it.pedido : '', composicao:it ? it.composicao : ''}));
+  });
   linhas.sort((a, b) => a.setor_id - b.setor_id || a.item.localeCompare(b.item));
   const pecas = linhas.reduce((a, l) => a + l.qtd, 0);
   const porSet = {};
@@ -1990,9 +2036,10 @@ function modalUsuario(u){
 }
 
 /* ---------- detalhe completo do item ---------- */
-function modalItem(id){
+async function modalItem(id){
   const it = dados.find(x => x.id === id);
   if(!it) return;
+  await carregarBaixas(it);
   const as = altsDe(it), d = dias(it.data_carga);
   const p = pronto(it);
   const dado = (k, v) => `<div class="dado"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`;
@@ -2008,7 +2055,7 @@ function modalItem(id){
   for(let s = 0; s < 10; s++){
     it.etapas.filter(x => x.setor_id === s).forEach(x =>
       hist.push({d:x.data, q:nomeEtapa(x.etapa), s, por:x.por, obs:x.lote_id ? 'lote' : ''}));
-    it.baixas.filter(b => b.setor_id === s).forEach(b =>
+    (it.baixas || []).filter(b => b.setor_id === s).forEach(b =>
       hist.push({d:b.data, q:`${b.qtd} ${b.peca || 'un'}`, s, por:b.por, obs:b.obs || ''}));
     const f = fechado(it, s);
     if(f) hist.push({d:f.data, q:'concluído', s, por:f.por, obs:''});
@@ -2052,9 +2099,10 @@ function modalItem(id){
 }
 
 /* ---------- detalhe da baixa de um setor (visão do PCP) ---------- */
-function modalDetalhe(id, s){
+async function modalDetalhe(id, s){
   const it = dados.find(x => x.id === id);
   if(!it) return;
+  await carregarBaixas(it);
   const e = estado(it, s), bxs = it.baixas.filter(b => b.setor_id === s);
   const ets = it.etapas.filter(x => x.setor_id === s);
   const pp = porPeca(it, s), nomes = Object.keys(pp);
@@ -2295,6 +2343,7 @@ function modalPrevia(){
         </div>`).join('')}
       </div>
     </section>
+    <div id="m-alerta"></div>
     <div class="acoes">
       <button class="btn pri" id="impConfirmar" ${novos.length ? '' : 'disabled'}>Importar ${novos.length} itens${comHistorico && impHist && totalBaixas ? ` e ${totalBaixas} baixas` : ''}</button>
       <button class="btn" id="impCancelar">Cancelar</button>
@@ -2319,12 +2368,23 @@ async function importar(){
     const lote = novos.slice(k, k + LOTE);
     b.textContent = `Importando ${k + 1}–${Math.min(k + LOTE, novos.length)} de ${novos.length}…`;
 
+    const abortar = (e, onde) => {
+      b.disabled = false; b.textContent = 'Importar';
+      document.getElementById('m-alerta') || document.querySelector('.mbody')
+        .insertAdjacentHTML('beforeend', '<div id="m-alerta"></div>');
+      document.getElementById('m-alerta').innerHTML =
+        `<div class="alerta grave">A importação parou em <b>${onde}</b>, depois de gravar ${feitos} itens.<br>
+         ${esc(e.message || e)}<br><br>
+         Nada mais foi gravado. Limpe o que entrou pela metade antes de tentar de novo.</div>`;
+      return null;
+    };
+
     const { data, error } = await sb.from('itens').insert(lote.map(i => ({
       pedido:i.pedido, classificacao:i.classificacao, item:i.item, composicao:i.composicao,
       observacao:i.observacao, qtd:i.qtd, cliente:i.cliente, familia:i.familia,
       data_kanban:i.data_kanban, data_carga:i.data_carga, carga:i.carga
     }))).select();
-    if(error){ b.disabled = false; b.textContent = 'Importar'; return erro(error); }
+    if(error) return abortar(error, 'gravar os itens');
 
     // roteiro: o que não passa
     const off = [];
@@ -2332,7 +2392,7 @@ async function importar(){
       off.push({item_id:linha.id, setor_id:s, passa:false})));
     if(off.length){
       const r = await sb.from('roteiro').upsert(off, {onConflict:'item_id,setor_id'});
-      if(r.error) erro(r.error);
+      if(r.error) return abortar(r.error, 'gravar o roteiro');
     }
 
     // histórico: cada data vira uma baixa e o fechamento do setor
@@ -2345,9 +2405,10 @@ async function importar(){
       }));
       if(bx.length){
         const r1 = await sb.from('baixas').insert(bx);
-        if(r1.error) erro(r1.error); else baixasFeitas += bx.length;
+        if(r1.error) return abortar(r1.error, 'gravar as baixas do histórico');
+        baixasFeitas += bx.length;
         const r2 = await sb.from('fechamentos').upsert(fe, {onConflict:'item_id,setor_id'});
-        if(r2.error) erro(r2.error);
+        if(r2.error) return abortar(r2.error, 'gravar os fechamentos');
       }
     }
 
@@ -2360,7 +2421,7 @@ async function importar(){
     });
     if(alts.length){
       const a = await sb.from('alteracoes').insert(alts);
-      if(a.error) erro(a.error);
+      if(a.error) return abortar(a.error, 'gravar as alterações');
     }
     feitos += data.length;
   }
@@ -2743,12 +2804,13 @@ function modalEtapa(id, etapa){
 }
 
 /* ---------- baixa ---------- */
-function modalBaixa(id){
+async function modalBaixa(id){
   alvo = dados.find(x => x.id === id);
+  await carregarBaixas(alvo);
   const s = perfil.setor_id;
   const it = alvo, falta = it.qtd - completo(it, s), pp = porPeca(it, s);
   passo = Math.max(1, Math.min(1, falta));
-  const bxs = it.baixas.filter(b => b.setor_id === s);
+  const bxs = (it.baixas || []).filter(b => b.setor_id === s);
   const fim = fechado(it, s) || completo(it, s) >= it.qtd;
   abrirM(`Entrega · ${SETN[s]}`, it.item,
     `${it.pedido} · ${it.qtd} un · carga ${fmt(it.data_carga)}`, `
@@ -2813,6 +2875,7 @@ function modalBaixa(id){
       por:perfil.nome, por_id:perfil.id
     });
     if(error) return erro(error);
+    it.baixas = null; gBaixas = null;
     fecharM(); toast(`${qtd} ${pc || 'un'} registrado`); await carregar(true);
   };
   const br = document.getElementById('bReg');
@@ -2844,6 +2907,7 @@ function modalBaixa(id){
   document.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
     const { error } = await sb.from('baixas').delete().eq('id', b.dataset.del);
     if(error) return erro(error);
+    it.baixas = null;
     fecharM(); toast('Baixa removida'); await carregar(true);
   });
 }
