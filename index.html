@@ -400,6 +400,13 @@ th[data-col]:hover{}
       <button id="btOutra">Outra</button>
       <input type="date" id="dtOutra" hidden>
     </div>
+    <select class="fsel" id="selPeriodo" title="Quanto histórico trazer do banco">
+      <option value="30">Últimos 30 dias</option>
+      <option value="90" selected>Últimos 90 dias</option>
+      <option value="180">Últimos 6 meses</option>
+      <option value="365">Último ano</option>
+      <option value="0">Tudo</option>
+    </select>
     <button class="mini" id="btPainel" hidden>Alterações</button>
     <button class="mini" id="btEditar" hidden></button>
     <span class="vivo" id="vivo" hidden><span class="vd"></span><span id="vivoTxt">ao vivo</span></span>
@@ -469,6 +476,8 @@ let sel = new Set(), busca = '', filtro = null, alvo = null, passo = 1;
 let edicao = false, painel = false, verMortas = false, DATA = null;
 let ordem = [], recusas = [], lotes = [], usuarios = [];
 let limite = 250;
+let periodo = 90;                       // dias de kanban trazidos do banco
+let totalNoBanco = null;
 const PASSO_LIMITE = 250;
 let canal = null, pend = 0, tRec = null, recarregando = false;
 const F = {};
@@ -671,6 +680,22 @@ async function iniciar(){
 
 /* ---------------- CARGA DE DADOS ---------------- */
 // o PostgREST corta em 1.000 linhas por consulta; aqui buscamos em páginas até acabar
+// a função do banco também vem em páginas de 1000
+async function paginarRpc(nome, args){
+  const PAG = 1000;
+  let saida = [], de = 0;
+  for(;;){
+    const { data, error } = await sb.rpc(nome, Object.assign({}, args,
+      {p_limite: PAG, p_offset: de}));
+    if(error) return {data:null, error};
+    saida = saida.concat(data || []);
+    if(!data || data.length < PAG) break;
+    de += PAG;
+    if(de > 100000) break;
+  }
+  return {data:saida, error:null};
+}
+
 async function todos(tabela, ordem){
   const PAG = 1000;
   let saida = [], de = 0;
@@ -694,10 +719,14 @@ async function carregar(silencioso){
   const rolX = cx ? cx.scrollLeft : 0, rolY = cx ? cx.scrollTop : 0;
   if(!silencioso) document.getElementById('conteudo').innerHTML = '<div class="vazio">Carregando…</div>';
 
-  const [grid, alt, rec] = await Promise.all([
-    todos('v_grid', 'pedido'), todos('alteracoes'), todos('recusas')
+  const desde = periodo ? menos1(hoje(), periodo) : null;
+  const [grid, alt, rec, tot] = await Promise.all([
+    paginarRpc('grid', {p_desde: desde}),
+    todos('alteracoes'), todos('recusas'),
+    sb.rpc('contar_itens', {p_desde: null})
   ]);
   for(const r of [grid, alt, rec]) if(r.error){ recarregando = false; return erro(r.error); }
+  totalNoBanco = tot && !tot.error ? tot.data : null;
   alteracoes = alt.data || [];
   recusas = rec.data || [];
 
@@ -750,6 +779,12 @@ document.getElementById('dtOutra').onchange = e => {
 document.getElementById('voltarHoje').onclick = () => { DATA = hoje(); pintar(); };
 document.querySelectorAll('#dataseg button[data-dd]').forEach(b =>
   b.addEventListener('click', () => { document.getElementById('dtOutra').hidden = true; }));
+document.getElementById('selPeriodo').onchange = async e => {
+  periodo = Number(e.target.value);
+  limite = PASSO_LIMITE;
+  gBaixas = null;
+  await carregar();
+};
 document.getElementById('btPainel').onclick = () => { painel = !painel; pintar(); };
 document.getElementById('btRecarregar').onclick = carregar;
 document.getElementById('btTema').onclick = () => {
@@ -1102,9 +1137,11 @@ function telaPCP(){
     maisBotao(listaToda.length, lista.length) +
     (listaToda.length ? '' : '<div class="vazio">Nenhum item. Use “Novo pedido” para criar o primeiro.</div>');
 
+  const fora = totalNoBanco !== null ? totalNoBanco - dados.length : 0;
   document.getElementById('cont').innerHTML =
     `<b>${listaToda.length}</b> de ${dados.length} itens · <b>${nSem}</b> sem carga${
-      listaToda.length > lista.length ? ` · mostrando ${lista.length}` : ''}`;
+      listaToda.length > lista.length ? ` · mostrando ${lista.length}` : ''}${
+      fora > 0 ? ` · ${fora} mais antigos fora do período` : ''}`;
   ligarFiltro();
   const bn = document.getElementById('btNovo');
   if(bn) bn.onclick = modalNovo;
